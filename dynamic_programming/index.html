@@ -1,0 +1,894 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Dynamic Programming — Code Cheatsheet</title>
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;700&family=Syne:wght@400;700;800&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #0a0a0f;
+    --surface: #12121a;
+    --surface2: #1a1a26;
+    --border: #2a2a3a;
+    --accent: #7c6aff;
+    --accent2: #ff6a9b;
+    --accent3: #6affd4;
+    --accent4: #ffd46a;
+    --text: #e8e8f0;
+    --muted: #6b6b80;
+    --comment: #4a9a6a;
+    --keyword: #c792ea;
+    --string: #c3e88d;
+    --func: #82aaff;
+    --number: #f78c6c;
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'Syne', sans-serif;
+    min-height: 100vh;
+    padding: 0;
+  }
+
+  /* HEADER */
+  header {
+    background: linear-gradient(135deg, #0d0d1a 0%, #1a0d2e 50%, #0d1a1a 100%);
+    border-bottom: 1px solid var(--border);
+    padding: 48px 40px 36px;
+    position: relative;
+    overflow: hidden;
+  }
+
+  header::before {
+    content: '';
+    position: absolute;
+    top: -60px; right: -60px;
+    width: 300px; height: 300px;
+    background: radial-gradient(circle, rgba(124,106,255,0.15) 0%, transparent 70%);
+    border-radius: 50%;
+  }
+
+  header::after {
+    content: '';
+    position: absolute;
+    bottom: -40px; left: 30%;
+    width: 200px; height: 200px;
+    background: radial-gradient(circle, rgba(106,255,212,0.08) 0%, transparent 70%);
+    border-radius: 50%;
+  }
+
+  .header-tag {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 11px;
+    color: var(--accent3);
+    letter-spacing: 3px;
+    text-transform: uppercase;
+    margin-bottom: 12px;
+    opacity: 0.8;
+  }
+
+  header h1 {
+    font-size: clamp(28px, 5vw, 48px);
+    font-weight: 800;
+    line-height: 1.1;
+    background: linear-gradient(135deg, #fff 0%, var(--accent) 60%, var(--accent3) 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    margin-bottom: 12px;
+  }
+
+  header p {
+    color: var(--muted);
+    font-size: 14px;
+    font-family: 'JetBrains Mono', monospace;
+    letter-spacing: 0.5px;
+  }
+
+  /* NAV */
+  nav {
+    background: var(--surface);
+    border-bottom: 1px solid var(--border);
+    padding: 0 40px;
+    display: flex;
+    gap: 0;
+    overflow-x: auto;
+    scrollbar-width: none;
+  }
+
+  nav::-webkit-scrollbar { display: none; }
+
+  nav a {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 12px;
+    color: var(--muted);
+    text-decoration: none;
+    padding: 16px 20px;
+    border-bottom: 2px solid transparent;
+    white-space: nowrap;
+    transition: all 0.2s;
+    letter-spacing: 0.5px;
+  }
+
+  nav a:hover {
+    color: var(--text);
+    border-bottom-color: var(--accent);
+  }
+
+  /* MAIN */
+  main {
+    max-width: 1100px;
+    margin: 0 auto;
+    padding: 48px 40px;
+    display: flex;
+    flex-direction: column;
+    gap: 64px;
+  }
+
+  /* SECTION */
+  .section {
+    display: flex;
+    flex-direction: column;
+    gap: 24px;
+    animation: fadeUp 0.5s ease both;
+  }
+
+  @keyframes fadeUp {
+    from { opacity: 0; transform: translateY(20px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+
+  .section-header {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    padding-bottom: 16px;
+    border-bottom: 1px solid var(--border);
+  }
+
+  .section-num {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 11px;
+    color: var(--accent);
+    background: rgba(124,106,255,0.1);
+    border: 1px solid rgba(124,106,255,0.3);
+    padding: 4px 10px;
+    border-radius: 4px;
+    letter-spacing: 1px;
+  }
+
+  .section h2 {
+    font-size: 22px;
+    font-weight: 700;
+    color: var(--text);
+  }
+
+  .accent-dot {
+    width: 8px; height: 8px;
+    border-radius: 50%;
+    margin-left: auto;
+    flex-shrink: 0;
+  }
+
+  /* CARDS */
+  .card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    overflow: hidden;
+    transition: border-color 0.2s;
+  }
+
+  .card:hover { border-color: rgba(124,106,255,0.4); }
+
+  .card-header {
+    padding: 16px 20px;
+    background: var(--surface2);
+    border-bottom: 1px solid var(--border);
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    flex-wrap: wrap;
+  }
+
+  .card-title {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 13px;
+    font-weight: 700;
+    color: var(--func);
+  }
+
+  .badge {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 10px;
+    padding: 3px 8px;
+    border-radius: 4px;
+    letter-spacing: 0.5px;
+    font-weight: 700;
+  }
+
+  .badge-time { background: rgba(106,255,212,0.1); color: var(--accent3); border: 1px solid rgba(106,255,212,0.25); }
+  .badge-space { background: rgba(255,212,106,0.1); color: var(--accent4); border: 1px solid rgba(255,212,106,0.25); }
+  .badge-type { background: rgba(124,106,255,0.1); color: var(--accent); border: 1px solid rgba(124,106,255,0.25); }
+  .badge-lib { background: rgba(255,106,155,0.1); color: var(--accent2); border: 1px solid rgba(255,106,155,0.25); }
+
+  /* CODE BLOCK */
+  .code-block {
+    padding: 24px;
+    overflow-x: auto;
+  }
+
+  .code-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 13px;
+    line-height: 1.8;
+  }
+
+  .code-table tr { vertical-align: top; }
+
+  .code-table tr:hover .line-code { background: rgba(124,106,255,0.05); }
+
+  .line-num {
+    color: var(--muted);
+    font-size: 11px;
+    padding-right: 20px;
+    padding-left: 4px;
+    user-select: none;
+    opacity: 0.5;
+    white-space: nowrap;
+    width: 24px;
+  }
+
+  .line-code {
+    white-space: pre;
+    color: var(--text);
+    padding: 1px 12px 1px 8px;
+    border-radius: 4px;
+    transition: background 0.15s;
+  }
+
+  .line-explain {
+    color: var(--muted);
+    font-size: 11px;
+    padding-left: 24px;
+    padding-right: 8px;
+    line-height: 1.8;
+    border-left: 2px solid var(--border);
+    font-family: 'Syne', sans-serif;
+    font-style: italic;
+  }
+
+  .line-explain.highlight {
+    color: var(--accent3);
+    border-left-color: var(--accent3);
+    font-style: normal;
+    font-weight: 600;
+  }
+
+  .line-explain.warn {
+    color: var(--accent4);
+    border-left-color: var(--accent4);
+    font-style: normal;
+    font-weight: 600;
+  }
+
+  /* Syntax colors */
+  .kw { color: var(--keyword); }
+  .fn { color: var(--func); }
+  .cm { color: var(--comment); font-style: italic; }
+  .st { color: var(--string); }
+  .nm { color: var(--number); }
+  .op { color: var(--accent2); }
+
+  /* RECURRENCE BOX */
+  .recurrence {
+    background: rgba(124,106,255,0.06);
+    border: 1px solid rgba(124,106,255,0.2);
+    border-radius: 8px;
+    padding: 16px 20px;
+    margin: 16px 24px 0;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 12px;
+  }
+
+  .recurrence-title {
+    font-size: 10px;
+    letter-spacing: 2px;
+    color: var(--accent);
+    text-transform: uppercase;
+    margin-bottom: 10px;
+    font-family: 'Syne', sans-serif;
+  }
+
+  .recurrence-row {
+    display: flex;
+    gap: 12px;
+    align-items: baseline;
+    margin-bottom: 4px;
+    flex-wrap: wrap;
+  }
+
+  .rec-label { color: var(--muted); font-size: 11px; width: 80px; flex-shrink: 0; }
+  .rec-value { color: var(--text); }
+  .rec-note { color: var(--accent3); font-size: 11px; margin-left: 8px; }
+
+  /* PATTERN GRID */
+  .pattern-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 12px;
+    padding: 20px 24px;
+  }
+
+  .pattern-item {
+    background: var(--bg);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 14px 16px;
+  }
+
+  .pattern-label {
+    font-size: 10px;
+    letter-spacing: 2px;
+    color: var(--muted);
+    text-transform: uppercase;
+    margin-bottom: 6px;
+    font-family: 'JetBrains Mono', monospace;
+  }
+
+  .pattern-value {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 13px;
+    color: var(--accent3);
+  }
+
+  /* LIBRARY SECTION */
+  .lib-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+    gap: 16px;
+  }
+
+  .lib-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 20px;
+  }
+
+  .lib-card-title {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 12px;
+    color: var(--accent2);
+    margin-bottom: 4px;
+    letter-spacing: 0.5px;
+  }
+
+  .lib-card-desc {
+    font-size: 12px;
+    color: var(--muted);
+    margin-bottom: 14px;
+    line-height: 1.6;
+  }
+
+  .lib-code {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 12px;
+    background: var(--bg);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    padding: 12px 14px;
+    color: var(--text);
+    white-space: pre;
+    overflow-x: auto;
+    line-height: 1.7;
+  }
+
+  /* DIVIDER */
+  hr { border: none; border-top: 1px solid var(--border); }
+
+  /* FOOTER */
+  footer {
+    text-align: center;
+    padding: 32px 40px;
+    border-top: 1px solid var(--border);
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 11px;
+    color: var(--muted);
+    letter-spacing: 1px;
+  }
+
+  @media (max-width: 700px) {
+    main { padding: 32px 20px; }
+    header { padding: 32px 20px 24px; }
+    nav { padding: 0 20px; }
+    .line-explain { display: none; }
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="header-tag">// dynamic programming</div>
+  <h1>DP Code Cheatsheet</h1>
+  <p>algorithms · patterns · line-by-line explanations</p>
+</header>
+
+<nav>
+  <a href="#libraries">Libraries</a>
+  <a href="#fibonacci">Fibonacci</a>
+  <a href="#staircase">Staircase</a>
+  <a href="#bellman">Bellman–Ford</a>
+  <a href="#value">Value Iteration</a>
+  <a href="#edit">Edit Distance</a>
+  <a href="#pattern">DP Pattern</a>
+</nav>
+
+<main>
+
+  <!-- ── LIBRARY FUNCTIONS ── -->
+  <section class="section" id="libraries">
+    <div class="section-header">
+      <span class="section-num">00</span>
+      <h2>Common Library Functions</h2>
+      <div class="accent-dot" style="background:var(--accent2)"></div>
+    </div>
+    <div class="lib-grid">
+
+      <div class="lib-card">
+        <div class="lib-card-title">functools.lru_cache</div>
+        <div class="lib-card-desc">Auto-memoizes function calls. Caches return values by input. <code style="color:var(--accent3)">None</code> = unlimited size.</div>
+        <div class="lib-code"><span class="kw">from</span> functools <span class="kw">import</span> <span class="fn">lru_cache</span>
+
+<span class="op">@lru_cache</span>(<span class="nm">None</span>)
+<span class="kw">def</span> <span class="fn">my_func</span>(n):
+    ...</div>
+      </div>
+
+      <div class="lib-card">
+        <div class="lib-card-title">math.inf</div>
+        <div class="lib-card-desc">Represents infinity. Used to initialize distances so any real path is automatically shorter.</div>
+        <div class="lib-code"><span class="kw">import</span> math
+
+dist = [math.<span class="fn">inf</span>] * n
+<span class="cm"># any real number < math.inf</span></div>
+      </div>
+
+      <div class="lib-card">
+        <div class="lib-card-title">numpy.zeros / zeros_like</div>
+        <div class="lib-card-desc">Initialize arrays of zeros. <code style="color:var(--accent3)">zeros_like(V)</code> creates array with same shape as V.</div>
+        <div class="lib-code"><span class="kw">import</span> numpy <span class="kw">as</span> np
+
+V = np.<span class="fn">zeros</span>(n_states)
+newV = np.<span class="fn">zeros_like</span>(V)</div>
+      </div>
+
+      <div class="lib-card">
+        <div class="lib-card-title">numpy.sum</div>
+        <div class="lib-card-desc">Sums all elements. Used to compute expected value: Σ P(s'|s,a)·V(s') in one line.</div>
+        <div class="lib-code">np.<span class="fn">sum</span>(P[s,a] * V)
+<span class="cm"># elementwise multiply, then sum</span>
+<span class="cm"># = Σ P(s'|s,a) * V(s')</span></div>
+      </div>
+
+      <div class="lib-card">
+        <div class="lib-card-title">min() with multiple args</div>
+        <div class="lib-card-desc">Returns smallest value. In edit distance, picks the cheapest operation.</div>
+        <div class="lib-code"><span class="fn">min</span>(
+    dp[i<span class="op">-</span><span class="nm">1</span>][j],    <span class="cm"># deletion</span>
+    dp[i][j<span class="op">-</span><span class="nm">1</span>],   <span class="cm"># insertion</span>
+    dp[i<span class="op">-</span><span class="nm">1</span>][j<span class="op">-</span><span class="nm">1</span>]  <span class="cm"># substitution</span>
+)</div>
+      </div>
+
+      <div class="lib-card">
+        <div class="lib-card-title">List comprehension (2D table)</div>
+        <div class="lib-card-desc">Creates a 2D list (matrix). Outer loop = rows, inner = columns. Do NOT use <code style="color:var(--accent2)">[[0]*(n+1)]*(m+1)</code> — it shares references!</div>
+        <div class="lib-code"><span class="cm"># CORRECT — independent rows</span>
+dp = [[<span class="nm">0</span>] * (n<span class="op">+</span><span class="nm">1</span>) <span class="kw">for</span> _ <span class="kw">in</span> <span class="fn">range</span>(m<span class="op">+</span><span class="nm">1</span>)]
+
+<span class="cm"># WRONG — all rows are same object</span>
+dp = [[<span class="nm">0</span>] * (n<span class="op">+</span><span class="nm">1</span>)] * (m<span class="op">+</span><span class="nm">1</span>)</div>
+      </div>
+
+    </div>
+  </section>
+
+  <!-- ── FIBONACCI ── -->
+  <section class="section" id="fibonacci">
+    <div class="section-header">
+      <span class="section-num">01</span>
+      <h2>Fibonacci — Three Versions</h2>
+      <div class="accent-dot" style="background:var(--accent)"></div>
+    </div>
+
+    <!-- Memoization -->
+    <div class="card">
+      <div class="card-header">
+        <span class="card-title">fib_memo(n) — Top-Down Memoization</span>
+        <span class="badge badge-time">O(n) time</span>
+        <span class="badge badge-space">O(n) space</span>
+        <span class="badge badge-type">Top-Down</span>
+        <span class="badge badge-lib">lru_cache</span>
+      </div>
+      <div class="recurrence">
+        <div class="recurrence-title">DP Framework</div>
+        <div class="recurrence-row"><span class="rec-label">State:</span><span class="rec-value">dp[n] = F(n)</span></div>
+        <div class="recurrence-row"><span class="rec-label">Recurrence:</span><span class="rec-value">F(n) = F(n-1) + F(n-2)</span></div>
+        <div class="recurrence-row"><span class="rec-label">Base cases:</span><span class="rec-value">F(0)=0, F(1)=1</span></div>
+      </div>
+      <div class="code-block">
+        <table class="code-table">
+          <tr><td class="line-num">1</td><td class="line-code"><span class="kw">from</span> functools <span class="kw">import</span> <span class="fn">lru_cache</span></td><td class="line-explain">Import the memoization decorator from standard library</td></tr>
+          <tr><td class="line-num">2</td><td class="line-code"></td><td class="line-explain"></td></tr>
+          <tr><td class="line-num">3</td><td class="line-code"><span class="op">@lru_cache</span>(<span class="nm">None</span>)</td><td class="line-explain highlight">▶ Caches every (n) → result. Next call with same n returns instantly</td></tr>
+          <tr><td class="line-num">4</td><td class="line-code"><span class="kw">def</span> <span class="fn">fib_memo</span>(n):</td><td class="line-explain">Function definition — identical body to naive version</td></tr>
+          <tr><td class="line-num">5</td><td class="line-code">    <span class="kw">if</span> n <span class="op">&lt;=</span> <span class="nm">1</span>:</td><td class="line-explain">Base case check</td></tr>
+          <tr><td class="line-num">6</td><td class="line-code">        <span class="kw">return</span> n</td><td class="line-explain">F(0)=0, F(1)=1 — returns n directly since n≤1</td></tr>
+          <tr><td class="line-num">7</td><td class="line-code">    <span class="kw">return</span> <span class="fn">fib_memo</span>(n<span class="op">-</span><span class="nm">1</span>) <span class="op">+</span> <span class="fn">fib_memo</span>(n<span class="op">-</span><span class="nm">2</span>)</td><td class="line-explain highlight">▶ Recurrence — but cached! Each unique n computed only once</td></tr>
+        </table>
+      </div>
+    </div>
+
+    <!-- Tabulation -->
+    <div class="card">
+      <div class="card-header">
+        <span class="card-title">fib_bottom_up(n) — Tabulation</span>
+        <span class="badge badge-time">O(n) time</span>
+        <span class="badge badge-space">O(n) space</span>
+        <span class="badge badge-type">Bottom-Up</span>
+      </div>
+      <div class="code-block">
+        <table class="code-table">
+          <tr><td class="line-num">1</td><td class="line-code"><span class="kw">def</span> <span class="fn">fib_bottom_up</span>(n):</td><td class="line-explain"></td></tr>
+          <tr><td class="line-num">2</td><td class="line-code">    <span class="kw">if</span> n <span class="op">&lt;=</span> <span class="nm">1</span>:</td><td class="line-explain"></td></tr>
+          <tr><td class="line-num">3</td><td class="line-code">        <span class="kw">return</span> n</td><td class="line-explain">Handle base cases before building table</td></tr>
+          <tr><td class="line-num">4</td><td class="line-code">    dp = [<span class="nm">0</span>] <span class="op">*</span> (n <span class="op">+</span> <span class="nm">1</span>)</td><td class="line-explain highlight">▶ Table of size n+1 — index 0 through n. All start at 0</td></tr>
+          <tr><td class="line-num">5</td><td class="line-code">    dp[<span class="nm">1</span>] = <span class="nm">1</span></td><td class="line-explain">Base case: F(1)=1. dp[0] already 0 from initialization</td></tr>
+          <tr><td class="line-num">6</td><td class="line-code">    <span class="kw">for</span> i <span class="kw">in</span> <span class="fn">range</span>(<span class="nm">2</span>, n <span class="op">+</span> <span class="nm">1</span>):</td><td class="line-explain">Fill from small→large (bottom-up). Start at 2 since 0,1 set</td></tr>
+          <tr><td class="line-num">7</td><td class="line-code">        dp[i] = dp[i<span class="op">-</span><span class="nm">1</span>] <span class="op">+</span> dp[i<span class="op">-</span><span class="nm">2</span>]</td><td class="line-explain highlight">▶ Recurrence as table lookup — O(1) per step, no recursion</td></tr>
+          <tr><td class="line-num">8</td><td class="line-code">    <span class="kw">return</span> dp[n]</td><td class="line-explain">Answer is at index n</td></tr>
+        </table>
+      </div>
+    </div>
+
+    <!-- O(1) Space -->
+    <div class="card">
+      <div class="card-header">
+        <span class="card-title">fib_o1(n) — Space Optimized</span>
+        <span class="badge badge-time">O(n) time</span>
+        <span class="badge badge-space">O(1) space</span>
+        <span class="badge badge-type">Bottom-Up</span>
+      </div>
+      <div class="code-block">
+        <table class="code-table">
+          <tr><td class="line-num">1</td><td class="line-code"><span class="kw">def</span> <span class="fn">fib_o1</span>(n):</td><td class="line-explain"></td></tr>
+          <tr><td class="line-num">2</td><td class="line-code">    <span class="kw">if</span> n <span class="op">&lt;=</span> <span class="nm">1</span>:</td><td class="line-explain"></td></tr>
+          <tr><td class="line-num">3</td><td class="line-code">        <span class="kw">return</span> n</td><td class="line-explain"></td></tr>
+          <tr><td class="line-num">4</td><td class="line-code">    prev2 = <span class="nm">0</span></td><td class="line-explain">Replaces dp[0] — two steps back</td></tr>
+          <tr><td class="line-num">5</td><td class="line-code">    prev1 = <span class="nm">1</span></td><td class="line-explain">Replaces dp[1] — one step back</td></tr>
+          <tr><td class="line-num">6</td><td class="line-code">    <span class="kw">for</span> i <span class="kw">in</span> <span class="fn">range</span>(<span class="nm">2</span>, n <span class="op">+</span> <span class="nm">1</span>):</td><td class="line-explain"></td></tr>
+          <tr><td class="line-num">7</td><td class="line-code">        current = prev1 <span class="op">+</span> prev2</td><td class="line-explain highlight">▶ Same recurrence — just uses variables instead of array</td></tr>
+          <tr><td class="line-num">8</td><td class="line-code">        prev2 = prev1</td><td class="line-explain warn">⚠ Must update prev2 FIRST — saves old prev1 before overwrite</td></tr>
+          <tr><td class="line-num">9</td><td class="line-code">        prev1 = current</td><td class="line-explain">Slide window forward — prev1 becomes the new value</td></tr>
+          <tr><td class="line-num">10</td><td class="line-code">    <span class="kw">return</span> current</td><td class="line-explain">Only 2 vars stored regardless of n → O(1) space</td></tr>
+        </table>
+      </div>
+    </div>
+  </section>
+
+  <!-- ── STAIRCASE ── -->
+  <section class="section" id="staircase">
+    <div class="section-header">
+      <span class="section-num">02</span>
+      <h2>Staircase Problem</h2>
+      <div class="accent-dot" style="background:var(--accent3)"></div>
+    </div>
+
+    <div class="card">
+      <div class="card-header">
+        <span class="card-title">climb_stairs(n) — Steps of 1 or 2</span>
+        <span class="badge badge-time">O(n) time</span>
+        <span class="badge badge-space">O(n) space</span>
+        <span class="badge badge-type">Bottom-Up</span>
+      </div>
+      <div class="recurrence">
+        <div class="recurrence-title">DP Framework</div>
+        <div class="recurrence-row"><span class="rec-label">State:</span><span class="rec-value">dp[i] = ways to reach step i</span></div>
+        <div class="recurrence-row"><span class="rec-label">Recurrence:</span><span class="rec-value">dp[i] = dp[i-1] + dp[i-2]</span><span class="rec-note">← came from i-1 OR i-2</span></div>
+        <div class="recurrence-row"><span class="rec-label">Base cases:</span><span class="rec-value">dp[0]=1, dp[1]=1</span><span class="rec-note">← 1 way to stand at bottom</span></div>
+      </div>
+      <div class="code-block">
+        <table class="code-table">
+          <tr><td class="line-num">1</td><td class="line-code"><span class="kw">def</span> <span class="fn">climb_stairs</span>(n):</td><td class="line-explain"></td></tr>
+          <tr><td class="line-num">2</td><td class="line-code">    dp = [<span class="nm">0</span>] <span class="op">*</span> (n <span class="op">+</span> <span class="nm">1</span>)</td><td class="line-explain">Table with n+1 slots (index 0 to n)</td></tr>
+          <tr><td class="line-num">3</td><td class="line-code">    dp[<span class="nm">0</span>] = dp[<span class="nm">1</span>] = <span class="nm">1</span></td><td class="line-explain highlight">▶ dp[0]=1: one way to "be" at bottom. dp[1]=1: one way to reach step 1</td></tr>
+          <tr><td class="line-num">4</td><td class="line-code">    <span class="kw">for</span> i <span class="kw">in</span> <span class="fn">range</span>(<span class="nm">2</span>, n <span class="op">+</span> <span class="nm">1</span>):</td><td class="line-explain"></td></tr>
+          <tr><td class="line-num">5</td><td class="line-code">        dp[i] = dp[i<span class="op">-</span><span class="nm">1</span>] <span class="op">+</span> dp[i<span class="op">-</span><span class="nm">2</span>]</td><td class="line-explain highlight">▶ Ways to reach i = ways from i-1 (1-step) + ways from i-2 (2-step)</td></tr>
+          <tr><td class="line-num">6</td><td class="line-code">    <span class="kw">return</span> dp[n]</td><td class="line-explain"></td></tr>
+        </table>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-header">
+        <span class="card-title">climb_stairs_3(n) — Steps of 1, 2, or 3</span>
+        <span class="badge badge-time">O(n) time</span>
+        <span class="badge badge-space">O(n) space</span>
+        <span class="badge badge-type">Bottom-Up</span>
+      </div>
+      <div class="recurrence">
+        <div class="recurrence-title">What Changed</div>
+        <div class="recurrence-row"><span class="rec-label">Recurrence:</span><span class="rec-value">dp[i] = dp[i-1] + dp[i-2] + dp[i-3]</span></div>
+        <div class="recurrence-row"><span class="rec-label">Base cases:</span><span class="rec-value">dp[0]=1, dp[1]=1, dp[2]=2</span><span class="rec-note">← extra base case needed!</span></div>
+        <div class="recurrence-row"><span class="rec-label">Loop start:</span><span class="rec-value">range(3, n+1)</span><span class="rec-note">← starts at 3 not 2</span></div>
+      </div>
+      <div class="code-block">
+        <table class="code-table">
+          <tr><td class="line-num">1</td><td class="line-code"><span class="kw">def</span> <span class="fn">climb_stairs_3</span>(n):</td><td class="line-explain"></td></tr>
+          <tr><td class="line-num">2</td><td class="line-code">    <span class="kw">if</span> n <span class="op">&lt;=</span> <span class="nm">1</span>: <span class="kw">return</span> <span class="nm">1</span></td><td class="line-explain"></td></tr>
+          <tr><td class="line-num">3</td><td class="line-code">    dp = [<span class="nm">0</span>] <span class="op">*</span> (n <span class="op">+</span> <span class="nm">1</span>)</td><td class="line-explain"></td></tr>
+          <tr><td class="line-num">4</td><td class="line-code">    dp[<span class="nm">0</span>] = <span class="nm">1</span>; dp[<span class="nm">1</span>] = <span class="nm">1</span>; dp[<span class="nm">2</span>] = <span class="nm">2</span></td><td class="line-explain warn">⚠ dp[2] needed! Without it, dp[2-3]=dp[-1] reads wrong element in Python</td></tr>
+          <tr><td class="line-num">5</td><td class="line-code">    <span class="kw">for</span> i <span class="kw">in</span> <span class="fn">range</span>(<span class="nm">3</span>, n <span class="op">+</span> <span class="nm">1</span>):</td><td class="line-explain highlight">▶ Loop starts at 3 — all smaller cases already handled</td></tr>
+          <tr><td class="line-num">6</td><td class="line-code">        dp[i] = dp[i<span class="op">-</span><span class="nm">1</span>] <span class="op">+</span> dp[i<span class="op">-</span><span class="nm">2</span>] <span class="op">+</span> dp[i<span class="op">-</span><span class="nm">3</span>]</td><td class="line-explain highlight">▶ Three sources now — can arrive from 3 different prior steps</td></tr>
+          <tr><td class="line-num">7</td><td class="line-code">    <span class="kw">return</span> dp[n]</td><td class="line-explain"></td></tr>
+        </table>
+      </div>
+    </div>
+  </section>
+
+  <!-- ── BELLMAN FORD ── -->
+  <section class="section" id="bellman">
+    <div class="section-header">
+      <span class="section-num">03</span>
+      <h2>Bellman–Ford Algorithm</h2>
+      <div class="accent-dot" style="background:var(--accent4)"></div>
+    </div>
+
+    <div class="card">
+      <div class="card-header">
+        <span class="card-title">bellman_ford(edges, n, source)</span>
+        <span class="badge badge-time">O(V·E) time</span>
+        <span class="badge badge-space">O(V) space</span>
+        <span class="badge badge-type">Iterative DP</span>
+      </div>
+      <div class="recurrence">
+        <div class="recurrence-title">DP Framework</div>
+        <div class="recurrence-row"><span class="rec-label">State:</span><span class="rec-value">dist[v] = shortest distance from source to v</span></div>
+        <div class="recurrence-row"><span class="rec-label">Recurrence:</span><span class="rec-value">dist[v] = min(dist[u] + w) for all edges u→v</span></div>
+        <div class="recurrence-row"><span class="rec-label">Base cases:</span><span class="rec-value">dist[source]=0, all others=∞</span></div>
+        <div class="recurrence-row"><span class="rec-label">Iterations:</span><span class="rec-value">n-1 times</span><span class="rec-note">← longest path has at most n-1 edges</span></div>
+      </div>
+      <div class="code-block">
+        <table class="code-table">
+          <tr><td class="line-num">1</td><td class="line-code"><span class="kw">import</span> math</td><td class="line-explain"></td></tr>
+          <tr><td class="line-num">2</td><td class="line-code"></td><td class="line-explain"></td></tr>
+          <tr><td class="line-num">3</td><td class="line-code"><span class="kw">def</span> <span class="fn">bellman_ford</span>(edges, n, source):</td><td class="line-explain">edges = list of (u, v, w) tuples. n = num nodes</td></tr>
+          <tr><td class="line-num">4</td><td class="line-code">    dist = [math.inf] <span class="op">*</span> n</td><td class="line-explain highlight">▶ Initialize all distances to ∞ — we know nothing yet</td></tr>
+          <tr><td class="line-num">5</td><td class="line-code">    dist[source] = <span class="nm">0</span></td><td class="line-explain">Base case: cost to reach yourself = 0</td></tr>
+          <tr><td class="line-num">6</td><td class="line-code">    <span class="kw">for</span> _ <span class="kw">in</span> <span class="fn">range</span>(n <span class="op">-</span> <span class="nm">1</span>):</td><td class="line-explain warn">⚠ Outer loop runs n-1 times — guarantees paths up to n-1 edges long</td></tr>
+          <tr><td class="line-num">7</td><td class="line-code">        <span class="kw">for</span> u, v, w <span class="kw">in</span> edges:</td><td class="line-explain">Inner loop: check EVERY edge each iteration. u=from, v=to, w=weight</td></tr>
+          <tr><td class="line-num">8</td><td class="line-code">            <span class="kw">if</span> dist[u] <span class="op">+</span> w <span class="op">&lt;</span> dist[v]:</td><td class="line-explain highlight">▶ "Can I reach v cheaper by going through u?" This is called RELAXATION</td></tr>
+          <tr><td class="line-num">9</td><td class="line-code">                dist[v] = dist[u] <span class="op">+</span> w</td><td class="line-explain">Yes — update to the shorter distance</td></tr>
+          <tr><td class="line-num">10</td><td class="line-code">    <span class="kw">return</span> dist</td><td class="line-explain">Returns array: dist[i] = shortest distance from source to node i</td></tr>
+        </table>
+      </div>
+    </div>
+  </section>
+
+  <!-- ── VALUE ITERATION ── -->
+  <section class="section" id="value">
+    <div class="section-header">
+      <span class="section-num">04</span>
+      <h2>Value Iteration (MDP)</h2>
+      <div class="accent-dot" style="background:var(--accent2)"></div>
+    </div>
+
+    <div class="card">
+      <div class="card-header">
+        <span class="card-title">value_iteration(P, R, gamma, iters)</span>
+        <span class="badge badge-time">O(iters·S·A) time</span>
+        <span class="badge badge-space">O(S) space</span>
+        <span class="badge badge-type">Iterative DP</span>
+        <span class="badge badge-lib">numpy</span>
+      </div>
+      <div class="recurrence">
+        <div class="recurrence-title">Bellman Equation (the recurrence)</div>
+        <div class="recurrence-row"><span class="rec-label">V(s) =</span><span class="rec-value">max_a [ R(s,a) + γ · Σ P(s'|s,a) · V(s') ]</span></div>
+        <div class="recurrence-row"><span class="rec-label">Inputs:</span><span class="rec-value">P[s,a] = transition probs vector, R[s,a] = reward scalar</span></div>
+        <div class="recurrence-row"><span class="rec-label">γ (gamma):</span><span class="rec-value">0=shortsighted, 1=far-sighted, 0.9=typical</span></div>
+      </div>
+      <div class="code-block">
+        <table class="code-table">
+          <tr><td class="line-num">1</td><td class="line-code"><span class="kw">import</span> numpy <span class="kw">as</span> np</td><td class="line-explain"></td></tr>
+          <tr><td class="line-num">2</td><td class="line-code"></td><td class="line-explain"></td></tr>
+          <tr><td class="line-num">3</td><td class="line-code"><span class="kw">def</span> <span class="fn">value_iteration</span>(P, R, gamma=<span class="nm">0.9</span>, iters=<span class="nm">50</span>):</td><td class="line-explain">P shape: [S,A,S]. R shape: [S,A]. gamma: discount factor</td></tr>
+          <tr><td class="line-num">4</td><td class="line-code">    n_states, n_actions, _ = P.shape</td><td class="line-explain">Unpack dimensions. _ discards the third dimension (S again)</td></tr>
+          <tr><td class="line-num">5</td><td class="line-code">    V = np.<span class="fn">zeros</span>(n_states)</td><td class="line-explain highlight">▶ Base case: assume all states worth 0 to start</td></tr>
+          <tr><td class="line-num">6</td><td class="line-code">    <span class="kw">for</span> _ <span class="kw">in</span> <span class="fn">range</span>(iters):</td><td class="line-explain">Repeat until values converge (like n-1 iterations in Bellman-Ford)</td></tr>
+          <tr><td class="line-num">7</td><td class="line-code">        newV = np.<span class="fn">zeros_like</span>(V)</td><td class="line-explain warn">⚠ Use newV not V — update all states simultaneously, not one-by-one</td></tr>
+          <tr><td class="line-num">8</td><td class="line-code">        <span class="kw">for</span> s <span class="kw">in</span> <span class="fn">range</span>(n_states):</td><td class="line-explain">Visit every state</td></tr>
+          <tr><td class="line-num">9</td><td class="line-code">            action_values = []</td><td class="line-explain">Collect value of each action at state s</td></tr>
+          <tr><td class="line-num">10</td><td class="line-code">            <span class="kw">for</span> a <span class="kw">in</span> <span class="fn">range</span>(n_actions):</td><td class="line-explain">Try every possible action</td></tr>
+          <tr><td class="line-num">11</td><td class="line-code">                action_values.<span class="fn">append</span>(</td><td class="line-explain"></td></tr>
+          <tr><td class="line-num">12</td><td class="line-code">                    R[s,a] <span class="op">+</span> gamma <span class="op">*</span> np.<span class="fn">sum</span>(P[s,a] <span class="op">*</span> V)</td><td class="line-explain highlight">▶ THIS IS THE BELLMAN EQUATION: reward + discounted future value</td></tr>
+          <tr><td class="line-num">13</td><td class="line-code">                )</td><td class="line-explain">P[s,a]*V = elementwise multiply → np.sum = Σ P(s'|s,a)·V(s')</td></tr>
+          <tr><td class="line-num">14</td><td class="line-code">            newV[s] = <span class="fn">max</span>(action_values)</td><td class="line-explain">Take best action's value — the "max_a" part of Bellman equation</td></tr>
+          <tr><td class="line-num">15</td><td class="line-code">        V = newV</td><td class="line-explain">Replace old values — repeat until stable</td></tr>
+          <tr><td class="line-num">16</td><td class="line-code">    <span class="kw">return</span> V</td><td class="line-explain">V[s] = optimal value of each state</td></tr>
+        </table>
+      </div>
+    </div>
+  </section>
+
+  <!-- ── EDIT DISTANCE ── -->
+  <section class="section" id="edit">
+    <div class="section-header">
+      <span class="section-num">05</span>
+      <h2>Edit Distance (Levenshtein)</h2>
+      <div class="accent-dot" style="background:var(--accent3)"></div>
+    </div>
+
+    <div class="card">
+      <div class="card-header">
+        <span class="card-title">edit_distance(s, t)</span>
+        <span class="badge badge-time">O(m·n) time</span>
+        <span class="badge badge-space">O(m·n) space</span>
+        <span class="badge badge-type">2D Bottom-Up</span>
+      </div>
+      <div class="recurrence">
+        <div class="recurrence-title">DP Framework</div>
+        <div class="recurrence-row"><span class="rec-label">State:</span><span class="rec-value">dp[i][j] = edit distance between s[:i] and t[:j]</span></div>
+        <div class="recurrence-row"><span class="rec-label">Match:</span><span class="rec-value">dp[i][j] = dp[i-1][j-1]</span><span class="rec-note">← free, chars already equal</span></div>
+        <div class="recurrence-row"><span class="rec-label">No match:</span><span class="rec-value">dp[i][j] = 1 + min(dp[i-1][j], dp[i][j-1], dp[i-1][j-1])</span></div>
+        <div class="recurrence-row"><span class="rec-label">Base cases:</span><span class="rec-value">dp[i][0]=i (deletions), dp[0][j]=j (insertions)</span></div>
+      </div>
+      <div class="code-block">
+        <table class="code-table">
+          <tr><td class="line-num">1</td><td class="line-code"><span class="kw">def</span> <span class="fn">edit_distance</span>(s: <span class="fn">str</span>, t: <span class="fn">str</span>) -> <span class="fn">int</span>:</td><td class="line-explain"></td></tr>
+          <tr><td class="line-num">2</td><td class="line-code">    m, n = <span class="fn">len</span>(s), <span class="fn">len</span>(t)</td><td class="line-explain">m = len of s (rows), n = len of t (columns)</td></tr>
+          <tr><td class="line-num">3</td><td class="line-code">    dp = [[<span class="nm">0</span>] <span class="op">*</span> (n <span class="op">+</span> <span class="nm">1</span>) <span class="kw">for</span> _ <span class="kw">in</span> <span class="fn">range</span>(m <span class="op">+</span> <span class="nm">1</span>)]</td><td class="line-explain highlight">▶ 2D table (m+1)×(n+1). Extra row/col for empty string base cases</td></tr>
+          <tr><td class="line-num">4</td><td class="line-code">    <span class="kw">for</span> i <span class="kw">in</span> <span class="fn">range</span>(m <span class="op">+</span> <span class="nm">1</span>):</td><td class="line-explain"></td></tr>
+          <tr><td class="line-num">5</td><td class="line-code">        dp[i][<span class="nm">0</span>] = i</td><td class="line-explain highlight">▶ First column: transform s[:i] to "" needs i deletions</td></tr>
+          <tr><td class="line-num">6</td><td class="line-code">    <span class="kw">for</span> j <span class="kw">in</span> <span class="fn">range</span>(n <span class="op">+</span> <span class="nm">1</span>):</td><td class="line-explain"></td></tr>
+          <tr><td class="line-num">7</td><td class="line-code">        dp[<span class="nm">0</span>][j] = j</td><td class="line-explain highlight">▶ First row: transform "" to t[:j] needs j insertions</td></tr>
+          <tr><td class="line-num">8</td><td class="line-code">    <span class="kw">for</span> i <span class="kw">in</span> <span class="fn">range</span>(<span class="nm">1</span>, m <span class="op">+</span> <span class="nm">1</span>):</td><td class="line-explain">Outer loop: each character of s</td></tr>
+          <tr><td class="line-num">9</td><td class="line-code">        <span class="kw">for</span> j <span class="kw">in</span> <span class="fn">range</span>(<span class="nm">1</span>, n <span class="op">+</span> <span class="nm">1</span>):</td><td class="line-explain">Inner loop: each character of t</td></tr>
+          <tr><td class="line-num">10</td><td class="line-code">            <span class="kw">if</span> s[i <span class="op">-</span> <span class="nm">1</span>] <span class="op">==</span> t[j <span class="op">-</span> <span class="nm">1</span>]:</td><td class="line-explain warn">⚠ s[i-1] not s[i] — dp[i] means i chars, so current char is index i-1</td></tr>
+          <tr><td class="line-num">11</td><td class="line-code">                dp[i][j] = dp[i <span class="op">-</span> <span class="nm">1</span>][j <span class="op">-</span> <span class="nm">1</span>]</td><td class="line-explain highlight">▶ Match → FREE. Inherit diagonal — no operation needed</td></tr>
+          <tr><td class="line-num">12</td><td class="line-code">            <span class="kw">else</span>:</td><td class="line-explain"></td></tr>
+          <tr><td class="line-num">13</td><td class="line-code">                dp[i][j] = <span class="nm">1</span> <span class="op">+</span> <span class="fn">min</span>(</td><td class="line-explain">No match → pick cheapest operation (+1 cost)</td></tr>
+          <tr><td class="line-num">14</td><td class="line-code">                    dp[i <span class="op">-</span> <span class="nm">1</span>][j],</td><td class="line-explain highlight">▶ DELETION — came from above (removed char from s)</td></tr>
+          <tr><td class="line-num">15</td><td class="line-code">                    dp[i][j <span class="op">-</span> <span class="nm">1</span>],</td><td class="line-explain highlight">▶ INSERTION — came from left (inserted char into s)</td></tr>
+          <tr><td class="line-num">16</td><td class="line-code">                    dp[i <span class="op">-</span> <span class="nm">1</span>][j <span class="op">-</span> <span class="nm">1</span>]</td><td class="line-explain highlight">▶ SUBSTITUTION — came from diagonal (swapped char)</td></tr>
+          <tr><td class="line-num">17</td><td class="line-code">                )</td><td class="line-explain"></td></tr>
+          <tr><td class="line-num">18</td><td class="line-code">    <span class="kw">return</span> dp[m][n]</td><td class="line-explain">Bottom-right cell = answer for full strings s and t</td></tr>
+        </table>
+      </div>
+    </div>
+  </section>
+
+  <!-- ── DP PATTERN ── -->
+  <section class="section" id="pattern">
+    <div class="section-header">
+      <span class="section-num">06</span>
+      <h2>The Universal DP Pattern</h2>
+      <div class="accent-dot" style="background:var(--accent)"></div>
+    </div>
+
+    <div class="card">
+      <div class="card-header">
+        <span class="card-title">Apply this framework to every DP problem</span>
+        <span class="badge badge-type">Exam Strategy</span>
+      </div>
+      <div class="pattern-grid">
+        <div class="pattern-item">
+          <div class="pattern-label">Step 1 — State</div>
+          <div class="pattern-value">What does dp[i] mean?</div>
+        </div>
+        <div class="pattern-item">
+          <div class="pattern-label">Step 2 — Recurrence</div>
+          <div class="pattern-value">dp[i] = f(dp[i-1], ...)</div>
+        </div>
+        <div class="pattern-item">
+          <div class="pattern-label">Step 3 — Base Cases</div>
+          <div class="pattern-value">Smallest known answers</div>
+        </div>
+        <div class="pattern-item">
+          <div class="pattern-label">Step 4 — Direction</div>
+          <div class="pattern-value">Top-down or Bottom-up</div>
+        </div>
+        <div class="pattern-item">
+          <div class="pattern-label">Step 5 — Answer</div>
+          <div class="pattern-value">dp[n] or dp[m][n]</div>
+        </div>
+        <div class="pattern-item">
+          <div class="pattern-label">Step 6 — Complexity</div>
+          <div class="pattern-value">States × Work per state</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-header">
+        <span class="card-title">All Algorithms at a Glance</span>
+        <span class="badge badge-type">Quick Reference</span>
+      </div>
+      <div class="code-block" style="padding:20px 24px; overflow-x:auto">
+        <table style="width:100%; border-collapse:collapse; font-family:'JetBrains Mono',monospace; font-size:12px;">
+          <tr style="border-bottom:1px solid var(--border); color:var(--muted);">
+            <td style="padding:8px 16px 8px 0">Algorithm</td>
+            <td style="padding:8px 16px">Style</td>
+            <td style="padding:8px 16px">Time</td>
+            <td style="padding:8px 16px">Space</td>
+            <td style="padding:8px 16px">Key Idea</td>
+          </tr>
+          <tr style="border-bottom:1px solid var(--border);">
+            <td style="padding:10px 16px 10px 0; color:var(--func)">fib_memo</td>
+            <td style="padding:10px 16px; color:var(--accent)">Top-down</td>
+            <td style="padding:10px 16px; color:var(--accent3)">O(n)</td>
+            <td style="padding:10px 16px; color:var(--accent4)">O(n)</td>
+            <td style="padding:10px 16px; color:var(--muted)">@lru_cache caches recursion</td>
+          </tr>
+          <tr style="border-bottom:1px solid var(--border);">
+            <td style="padding:10px 16px 10px 0; color:var(--func)">fib_bottom_up</td>
+            <td style="padding:10px 16px; color:var(--accent)">Bottom-up</td>
+            <td style="padding:10px 16px; color:var(--accent3)">O(n)</td>
+            <td style="padding:10px 16px; color:var(--accent4)">O(n)</td>
+            <td style="padding:10px 16px; color:var(--muted)">Fill table small→large</td>
+          </tr>
+          <tr style="border-bottom:1px solid var(--border);">
+            <td style="padding:10px 16px 10px 0; color:var(--func)">fib_o1</td>
+            <td style="padding:10px 16px; color:var(--accent)">Bottom-up</td>
+            <td style="padding:10px 16px; color:var(--accent3)">O(n)</td>
+            <td style="padding:10px 16px; color:var(--accent4)">O(1)</td>
+            <td style="padding:10px 16px; color:var(--muted)">Only keep last 2 vars</td>
+          </tr>
+          <tr style="border-bottom:1px solid var(--border);">
+            <td style="padding:10px 16px 10px 0; color:var(--func)">climb_stairs</td>
+            <td style="padding:10px 16px; color:var(--accent)">Bottom-up</td>
+            <td style="padding:10px 16px; color:var(--accent3)">O(n)</td>
+            <td style="padding:10px 16px; color:var(--accent4)">O(n)</td>
+            <td style="padding:10px 16px; color:var(--muted)">Same as Fibonacci, diff meaning</td>
+          </tr>
+          <tr style="border-bottom:1px solid var(--border);">
+            <td style="padding:10px 16px 10px 0; color:var(--func)">bellman_ford</td>
+            <td style="padding:10px 16px; color:var(--accent)">Iterative</td>
+            <td style="padding:10px 16px; color:var(--accent3)">O(V·E)</td>
+            <td style="padding:10px 16px; color:var(--accent4)">O(V)</td>
+            <td style="padding:10px 16px; color:var(--muted)">Relax all edges n-1 times</td>
+          </tr>
+          <tr style="border-bottom:1px solid var(--border);">
+            <td style="padding:10px 16px 10px 0; color:var(--func)">value_iteration</td>
+            <td style="padding:10px 16px; color:var(--accent)">Iterative</td>
+            <td style="padding:10px 16px; color:var(--accent3)">O(I·S·A)</td>
+            <td style="padding:10px 16px; color:var(--accent4)">O(S)</td>
+            <td style="padding:10px 16px; color:var(--muted)">Bellman equation until convergence</td>
+          </tr>
+          <tr>
+            <td style="padding:10px 16px 10px 0; color:var(--func)">edit_distance</td>
+            <td style="padding:10px 16px; color:var(--accent)">Bottom-up</td>
+            <td style="padding:10px 16px; color:var(--accent3)">O(m·n)</td>
+            <td style="padding:10px 16px; color:var(--accent4)">O(m·n)</td>
+            <td style="padding:10px 16px; color:var(--muted)">2D table, 3-way min at each cell</td>
+          </tr>
+        </table>
+      </div>
+    </div>
+
+  </section>
+
+</main>
+
+<footer>
+  dynamic programming cheatsheet &nbsp;·&nbsp; dsa midterm prep &nbsp;·&nbsp; 2026
+</footer>
+
+</body>
+</html>
