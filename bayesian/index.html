@@ -1,0 +1,1243 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Bayesian Coding Cheatsheet</title>
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;700&family=Syne:wght@400;600;700;800&family=DM+Sans:ital,wght@0,300;0,400;0,500;1,300&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #0a0e1a;
+    --surface: #111827;
+    --surface2: #1a2236;
+    --border: #1e2d45;
+    --accent: #38bdf8;
+    --accent2: #f472b6;
+    --accent3: #34d399;
+    --accent4: #fb923c;
+    --accent5: #a78bfa;
+    --text: #e2e8f0;
+    --text-muted: #64748b;
+    --text-dim: #94a3b8;
+    --comment: #4ade80;
+    --keyword: #f472b6;
+    --string: #fbbf24;
+    --func: #38bdf8;
+    --num: #fb923c;
+    --var: #e2e8f0;
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'DM Sans', sans-serif;
+    font-size: 14px;
+    line-height: 1.6;
+    min-height: 100vh;
+  }
+
+  /* ── Background texture ── */
+  body::before {
+    content: '';
+    position: fixed;
+    inset: 0;
+    background:
+      radial-gradient(ellipse 80% 50% at 20% 0%, rgba(56,189,248,0.07) 0%, transparent 60%),
+      radial-gradient(ellipse 60% 40% at 80% 100%, rgba(244,114,182,0.06) 0%, transparent 55%),
+      radial-gradient(ellipse 40% 60% at 60% 40%, rgba(52,211,153,0.04) 0%, transparent 50%);
+    pointer-events: none;
+    z-index: 0;
+  }
+
+  .page {
+    position: relative;
+    z-index: 1;
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 48px 32px 80px;
+  }
+
+  /* ── Header ── */
+  .header {
+    display: grid;
+    grid-template-columns: 1fr auto;
+    align-items: end;
+    gap: 24px;
+    margin-bottom: 56px;
+    padding-bottom: 32px;
+    border-bottom: 1px solid var(--border);
+  }
+
+  .header-label {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 11px;
+    font-weight: 500;
+    color: var(--accent);
+    letter-spacing: 0.15em;
+    text-transform: uppercase;
+    margin-bottom: 10px;
+  }
+
+  h1 {
+    font-family: 'Syne', sans-serif;
+    font-size: 42px;
+    font-weight: 800;
+    line-height: 1.05;
+    color: var(--text);
+    letter-spacing: -0.02em;
+  }
+
+  h1 span { color: var(--accent); }
+
+  .header-meta {
+    text-align: right;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 11px;
+    color: var(--text-muted);
+    line-height: 1.8;
+  }
+
+  .tag {
+    display: inline-block;
+    background: rgba(56,189,248,0.1);
+    border: 1px solid rgba(56,189,248,0.25);
+    color: var(--accent);
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 10px;
+    font-weight: 500;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    padding: 3px 10px;
+    border-radius: 3px;
+    margin: 3px 3px 0 0;
+  }
+
+  .tag.pink  { background: rgba(244,114,182,0.1); border-color: rgba(244,114,182,0.25); color: var(--accent2); }
+  .tag.green { background: rgba(52,211,153,0.1);  border-color: rgba(52,211,153,0.25);  color: var(--accent3); }
+  .tag.orange{ background: rgba(251,146,60,0.1);  border-color: rgba(251,146,60,0.25);  color: var(--accent4); }
+  .tag.purple{ background: rgba(167,139,250,0.1); border-color: rgba(167,139,250,0.25); color: var(--accent5); }
+
+  /* ── TOC ── */
+  .toc {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin-bottom: 56px;
+  }
+
+  .toc a {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    color: var(--text-dim);
+    text-decoration: none;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 12px;
+    padding: 8px 14px;
+    border-radius: 6px;
+    transition: all 0.2s;
+  }
+
+  .toc a:hover {
+    border-color: var(--accent);
+    color: var(--accent);
+    background: rgba(56,189,248,0.05);
+  }
+
+  .toc a .num {
+    color: var(--accent);
+    font-weight: 700;
+  }
+
+  /* ── Section ── */
+  .section {
+    margin-bottom: 72px;
+    scroll-margin-top: 24px;
+  }
+
+  .section-header {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    margin-bottom: 28px;
+  }
+
+  .section-num {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 11px;
+    font-weight: 700;
+    color: var(--accent);
+    background: rgba(56,189,248,0.1);
+    border: 1px solid rgba(56,189,248,0.2);
+    width: 36px;
+    height: 36px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 8px;
+    flex-shrink: 0;
+  }
+
+  .section-num.pink   { color: var(--accent2); background: rgba(244,114,182,0.1); border-color: rgba(244,114,182,0.2); }
+  .section-num.green  { color: var(--accent3); background: rgba(52,211,153,0.1);  border-color: rgba(52,211,153,0.2); }
+  .section-num.orange { color: var(--accent4); background: rgba(251,146,60,0.1);  border-color: rgba(251,146,60,0.2); }
+  .section-num.purple { color: var(--accent5); background: rgba(167,139,250,0.1); border-color: rgba(167,139,250,0.2); }
+
+  h2 {
+    font-family: 'Syne', sans-serif;
+    font-size: 22px;
+    font-weight: 700;
+    color: var(--text);
+    letter-spacing: -0.01em;
+  }
+
+  h2 .sub {
+    display: block;
+    font-family: 'DM Sans', sans-serif;
+    font-size: 13px;
+    font-weight: 300;
+    color: var(--text-muted);
+    letter-spacing: 0;
+    margin-top: 2px;
+  }
+
+  /* ── Library pill row ── */
+  .lib-row {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin-bottom: 20px;
+  }
+
+  .lib-pill {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 11px;
+    padding: 4px 12px;
+    border-radius: 100px;
+    border: 1px solid;
+  }
+
+  /* ── Function cards ── */
+  .fn-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(340px, 1fr));
+    gap: 12px;
+    margin-bottom: 28px;
+  }
+
+  .fn-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 16px 18px;
+    transition: border-color 0.2s;
+  }
+
+  .fn-card:hover { border-color: rgba(56,189,248,0.3); }
+
+  .fn-sig {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 12.5px;
+    color: var(--func);
+    margin-bottom: 6px;
+    word-break: break-all;
+  }
+
+  .fn-sig .kw { color: var(--keyword); }
+  .fn-sig .arg { color: var(--num); }
+
+  .fn-desc {
+    font-size: 12.5px;
+    color: var(--text-dim);
+    line-height: 1.55;
+  }
+
+  .fn-desc strong { color: var(--text); font-weight: 500; }
+
+  /* ── Code block ── */
+  .code-wrap {
+    background: #0d1117;
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    overflow: hidden;
+    margin-bottom: 28px;
+  }
+
+  .code-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 10px 16px;
+    background: var(--surface2);
+    border-bottom: 1px solid var(--border);
+  }
+
+  .code-title {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 11px;
+    color: var(--text-muted);
+    letter-spacing: 0.05em;
+  }
+
+  .code-dots { display: flex; gap: 6px; }
+  .dot { width: 10px; height: 10px; border-radius: 50%; }
+  .dot-r { background: #ff5f57; }
+  .dot-y { background: #febc2e; }
+  .dot-g { background: #28c840; }
+
+  .code-body {
+    padding: 20px 0;
+    overflow-x: auto;
+  }
+
+  .code-table { border-collapse: collapse; width: 100%; }
+
+  .code-row { display: flex; }
+  .code-row:hover { background: rgba(255,255,255,0.02); }
+
+  .ln {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 12px;
+    color: #3d4f63;
+    text-align: right;
+    padding: 1px 16px 1px 20px;
+    user-select: none;
+    min-width: 52px;
+    flex-shrink: 0;
+  }
+
+  .lc {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 12.5px;
+    padding: 1px 24px 1px 0;
+    white-space: pre;
+    flex: 1;
+    min-width: 0;
+  }
+
+  .la {
+    font-family: 'DM Sans', sans-serif;
+    font-size: 11.5px;
+    color: #4ade80;
+    padding: 1px 20px 1px 16px;
+    font-style: italic;
+    white-space: nowrap;
+    flex-shrink: 0;
+    border-left: 1px solid #1a2236;
+    min-width: 240px;
+    max-width: 320px;
+    align-self: center;
+  }
+
+  .la.warn { color: var(--accent4); }
+  .la.key  { color: var(--accent);  }
+  .la.note { color: var(--accent5); }
+
+  /* syntax colours */
+  .t-kw  { color: #f472b6; }  /* keyword: import, for, if, def */
+  .t-fn  { color: #38bdf8; }  /* function calls */
+  .t-str { color: #fbbf24; }  /* strings */
+  .t-num { color: #fb923c; }  /* numbers */
+  .t-cm  { color: #4b6478; font-style: italic; }  /* comments */
+  .t-var { color: #e2e8f0; }  /* variables */
+  .t-op  { color: #94a3b8; }  /* operators */
+  .t-cls { color: #34d399; }  /* class names */
+  .t-arr { color: #a78bfa; }  /* array literals */
+
+  /* ── Annotations callout ── */
+  .annotations {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-left: 3px solid var(--accent3);
+    border-radius: 0 10px 10px 0;
+    padding: 16px 20px;
+    margin-bottom: 28px;
+  }
+
+  .annotations h4 {
+    font-family: 'Syne', sans-serif;
+    font-size: 13px;
+    font-weight: 700;
+    color: var(--accent3);
+    margin-bottom: 10px;
+    letter-spacing: 0.05em;
+    text-transform: uppercase;
+  }
+
+  .ann-item {
+    display: grid;
+    grid-template-columns: auto 1fr;
+    gap: 12px;
+    margin-bottom: 8px;
+    align-items: baseline;
+  }
+
+  .ann-line {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 11px;
+    color: var(--accent);
+    background: rgba(56,189,248,0.1);
+    border: 1px solid rgba(56,189,248,0.2);
+    padding: 1px 7px;
+    border-radius: 4px;
+    white-space: nowrap;
+  }
+
+  .ann-text {
+    font-size: 12.5px;
+    color: var(--text-dim);
+    line-height: 1.5;
+  }
+
+  .ann-text strong { color: var(--text); font-weight: 500; }
+
+  /* ── Divider ── */
+  .divider {
+    height: 1px;
+    background: linear-gradient(90deg, transparent, var(--border) 20%, var(--border) 80%, transparent);
+    margin: 64px 0;
+  }
+
+  /* ── Trap box ── */
+  .trap {
+    background: rgba(251,146,60,0.06);
+    border: 1px solid rgba(251,146,60,0.2);
+    border-radius: 10px;
+    padding: 14px 18px;
+    margin-bottom: 16px;
+    display: flex;
+    gap: 12px;
+    align-items: flex-start;
+  }
+
+  .trap-icon { font-size: 16px; flex-shrink: 0; margin-top: 1px; }
+  .trap-body { font-size: 12.5px; color: var(--text-dim); line-height: 1.55; }
+  .trap-body strong { color: var(--accent4); font-weight: 500; }
+
+  /* scrollbar */
+  ::-webkit-scrollbar { width: 6px; height: 6px; }
+  ::-webkit-scrollbar-track { background: var(--bg); }
+  ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
+</style>
+</head>
+<body>
+<div class="page">
+
+  <!-- HEADER -->
+  <div class="header">
+    <div>
+      <div class="header-label">// coding cheatsheet</div>
+      <h1>Bayesian <span>Inference</span><br>Code Patterns</h1>
+      <div style="margin-top:14px;">
+        <span class="tag">numpy</span>
+        <span class="tag pink">matplotlib</span>
+        <span class="tag green">bayesian update</span>
+        <span class="tag orange">monty hall</span>
+        <span class="tag purple">regression</span>
+      </div>
+    </div>
+    
+  </div>
+
+  <!-- TOC -->
+  <div class="toc">
+    <a href="#s1"><span class="num">01</span> Bayesian Update Loop</a>
+    <a href="#s2"><span class="num">02</span> Sequential Updates</a>
+    <a href="#s3"><span class="num">03</span> Prior Convergence</a>
+    <a href="#s4"><span class="num">04</span> Monty Hall Simulation</a>
+    <a href="#s5"><span class="num">05</span> Bayesian Regression</a>
+  </div>
+
+
+  <!-- ══════════════════════════════════════════ -->
+  <!-- SECTION 1 – SINGLE BAYESIAN UPDATE        -->
+  <!-- ══════════════════════════════════════════ -->
+  <div class="section" id="s1">
+    <div class="section-header">
+      <div class="section-num">01</div>
+      <h2>Single Bayesian Update
+        <span class="sub">Core update formula — prior × likelihood → normalise → posterior</span>
+      </h2>
+    </div>
+
+    <!-- Library functions -->
+    <div class="lib-row">
+      <span class="lib-pill" style="color:#38bdf8;border-color:rgba(56,189,248,0.3);background:rgba(56,189,248,0.07)">numpy</span>
+    </div>
+    <div class="fn-grid">
+      <div class="fn-card">
+        <div class="fn-sig"><span class="kw">np</span>.array(<span class="arg">[v1, v2, v3]</span>)</div>
+        <div class="fn-desc">Creates a NumPy array. Here used to store <strong>prior/likelihood values per hypothesis</strong>. Enables element-wise math.</div>
+      </div>
+      <div class="fn-card">
+        <div class="fn-sig"><span class="kw">np</span>.sum(<span class="arg">array</span>)</div>
+        <div class="fn-desc">Sums all elements. Used as the <strong>normaliser = P(D)</strong> — total probability of the data across all hypotheses.</div>
+      </div>
+      <div class="fn-card">
+        <div class="fn-sig"><span class="arg">a</span> <span class="kw">*</span> <span class="arg">b</span> &nbsp;(element-wise)</div>
+        <div class="fn-desc">NumPy arrays multiply element-by-element. <strong>likelihood[i] × prior[i]</strong> for each hypothesis i simultaneously.</div>
+      </div>
+      <div class="fn-card">
+        <div class="fn-sig"><span class="arg">array</span>.copy()</div>
+        <div class="fn-desc">Creates an independent copy. <strong>Critical:</strong> prevents the posterior from aliasing the prior — modifying one would otherwise change the other.</div>
+      </div>
+    </div>
+
+    <!-- Code block -->
+    <div class="code-wrap">
+      <div class="code-header">
+        <div class="code-dots"><div class="dot dot-r"></div><div class="dot dot-y"></div><div class="dot dot-g"></div></div>
+        <div class="code-title">bayesian_single_update.py</div>
+        <div style="width:64px"></div>
+      </div>
+      <div class="code-body">
+
+        <div class="code-row">
+          <div class="ln">1</div>
+          <div class="lc"><span class="t-kw">import</span> <span class="t-var">numpy</span> <span class="t-kw">as</span> <span class="t-var">np</span></div>
+          <div class="la key">import NumPy for array math</div>
+        </div>
+        <div class="code-row"><div class="ln">2</div><div class="lc"></div><div class="la"></div></div>
+        <div class="code-row">
+          <div class="ln">3</div>
+          <div class="lc"><span class="t-cm"># 0=fair(HT)  1=two-heads(HH)  2=two-tails(TT)</span></div>
+          <div class="la">3 competing hypotheses</div>
+        </div>
+        <div class="code-row">
+          <div class="ln">4</div>
+          <div class="lc"><span class="t-var">prior</span> <span class="t-op">=</span> <span class="t-fn">np.array</span>([<span class="t-num">1/3</span>, <span class="t-num">1/3</span>, <span class="t-num">1/3</span>])</div>
+          <div class="la key">uniform prior — no preference yet</div>
+        </div>
+        <div class="code-row"><div class="ln">5</div><div class="lc"></div><div class="la"></div></div>
+        <div class="code-row">
+          <div class="ln">6</div>
+          <div class="lc"><span class="t-var">likelihood_h</span> <span class="t-op">=</span> <span class="t-fn">np.array</span>([<span class="t-num">1/2</span>, <span class="t-num">1</span>, <span class="t-num">0</span>])</div>
+          <div class="la">P(heads | each coin)</div>
+        </div>
+        <div class="code-row">
+          <div class="ln">7</div>
+          <div class="lc"><span class="t-var">likelihood_t</span> <span class="t-op">=</span> <span class="t-fn">np.array</span>([<span class="t-num">1/2</span>, <span class="t-num">0</span>, <span class="t-num">1</span>])</div>
+          <div class="la">P(tails | each coin)</div>
+        </div>
+        <div class="code-row"><div class="ln">8</div><div class="lc"></div><div class="la"></div></div>
+        <div class="code-row">
+          <div class="ln">9</div>
+          <div class="lc"><span class="t-cm"># ── Observe H: update beliefs ────────────────────</span></div>
+          <div class="la"></div>
+        </div>
+        <div class="code-row">
+          <div class="ln">10</div>
+          <div class="lc"><span class="t-var">posterior</span> <span class="t-op">=</span> <span class="t-var">likelihood_h</span> <span class="t-op">*</span> <span class="t-var">prior</span></div>
+          <div class="la key">element-wise: score each hypothesis</div>
+        </div>
+        <div class="code-row">
+          <div class="ln">11</div>
+          <div class="lc"><span class="t-var">posterior</span> <span class="t-op">=</span> <span class="t-var">posterior</span> <span class="t-op">/</span> <span class="t-fn">np.sum</span>(<span class="t-var">posterior</span>)</div>
+          <div class="la warn">divide by P(D) → sum to 1</div>
+        </div>
+        <div class="code-row"><div class="ln">12</div><div class="lc"></div><div class="la"></div></div>
+        <div class="code-row">
+          <div class="ln">13</div>
+          <div class="lc"><span class="t-fn">print</span>(<span class="t-str">f"After H: </span>{<span class="t-var">posterior</span>}<span class="t-str">"</span>)</div>
+          <div class="la"># [0.333, 0.667, 0.000]</div>
+        </div>
+
+      </div>
+    </div>
+
+    <div class="annotations">
+      <h4>Pattern breakdown</h4>
+      <div class="ann-item">
+        <div class="ann-line">L10</div>
+        <div class="ann-text"><strong>likelihood * prior</strong> — NumPy element-wise multiply. Each hypothesis gets its raw score: "how probable is this evidence IF this hypothesis were true, weighted by my prior belief?"</div>
+      </div>
+      <div class="ann-item">
+        <div class="ann-line">L11</div>
+        <div class="ann-text"><strong>/ np.sum(posterior)</strong> — This is dividing by P(D), the total probability of the data. Forces all posteriors to sum to 1. Without this step you have unnormalised scores, not probabilities.</div>
+      </div>
+    </div>
+
+    <div class="trap">
+      <div class="trap-icon">⚠️</div>
+      <div class="trap-body"><strong>Common mistake:</strong> Forgetting to normalise. <code style="color:var(--accent4)">likelihood * prior</code> gives you the numerator only. Always divide by <code style="color:var(--accent4)">np.sum(likelihood * prior)</code> to get valid probabilities.</div>
+    </div>
+  </div>
+
+  <div class="divider"></div>
+
+
+  <!-- ══════════════════════════════════════════ -->
+  <!-- SECTION 2 – SEQUENTIAL UPDATE             -->
+  <!-- ══════════════════════════════════════════ -->
+  <div class="section" id="s2">
+    <div class="section-header">
+      <div class="section-num pink">02</div>
+      <h2>Sequential Bayesian Updates
+        <span class="sub">Observe multiple data points one-by-one — posterior becomes new prior each step</span>
+      </h2>
+    </div>
+
+    <div class="lib-row">
+      <span class="lib-pill" style="color:#f472b6;border-color:rgba(244,114,182,0.3);background:rgba(244,114,182,0.07)">numpy</span>
+    </div>
+    <div class="fn-grid">
+      <div class="fn-card">
+        <div class="fn-sig"><span class="arg">list</span>[<span class="arg">likelihood_h</span>, <span class="arg">likelihood_t</span>, ...]</div>
+        <div class="fn-desc">A Python list of NumPy arrays. Each element is a <strong>likelihood vector for one observation</strong>. Loop through to update sequentially.</div>
+      </div>
+      <div class="fn-card">
+        <div class="fn-sig"><span class="kw">prior</span>.copy()</div>
+        <div class="fn-desc"><strong>Always copy before the loop.</strong> Without .copy(), posterior and prior point to the same object — modifications break both.</div>
+      </div>
+    </div>
+
+    <div class="code-wrap">
+      <div class="code-header">
+        <div class="code-dots"><div class="dot dot-r"></div><div class="dot dot-y"></div><div class="dot dot-g"></div></div>
+        <div class="code-title">bayesian_sequential_update.py</div>
+        <div style="width:64px"></div>
+      </div>
+      <div class="code-body">
+
+        <div class="code-row">
+          <div class="ln">1</div>
+          <div class="lc"><span class="t-cm"># Observe: H, H, H, T — update after each flip</span></div>
+          <div class="la"></div>
+        </div>
+        <div class="code-row">
+          <div class="ln">2</div>
+          <div class="lc"><span class="t-var">observations</span> <span class="t-op">=</span> [<span class="t-var">likelihood_h</span>, <span class="t-var">likelihood_h</span>, <span class="t-var">likelihood_h</span>, <span class="t-var">likelihood_t</span>]</div>
+          <div class="la key">list of likelihood vectors, 1 per flip</div>
+        </div>
+        <div class="code-row"><div class="ln">3</div><div class="lc"></div><div class="la"></div></div>
+        <div class="code-row">
+          <div class="ln">4</div>
+          <div class="lc"><span class="t-var">posterior</span> <span class="t-op">=</span> <span class="t-var">prior</span>.copy()</div>
+          <div class="la warn">copy — never alias prior directly</div>
+        </div>
+        <div class="code-row"><div class="ln">5</div><div class="lc"></div><div class="la"></div></div>
+        <div class="code-row">
+          <div class="ln">6</div>
+          <div class="lc"><span class="t-kw">for</span> <span class="t-var">obs</span> <span class="t-kw">in</span> <span class="t-var">observations</span>:</div>
+          <div class="la">loop over each observation</div>
+        </div>
+        <div class="code-row">
+          <div class="ln">7</div>
+          <div class="lc">    <span class="t-var">posterior</span> <span class="t-op">=</span> <span class="t-var">obs</span> <span class="t-op">*</span> <span class="t-var">posterior</span></div>
+          <div class="la key">posterior IS the new prior each step</div>
+        </div>
+        <div class="code-row">
+          <div class="ln">8</div>
+          <div class="lc">    <span class="t-var">posterior</span> <span class="t-op">=</span> <span class="t-var">posterior</span> <span class="t-op">/</span> <span class="t-fn">np.sum</span>(<span class="t-var">posterior</span>)</div>
+          <div class="la warn">normalise after EVERY update</div>
+        </div>
+        <div class="code-row"><div class="ln">9</div><div class="lc"></div><div class="la"></div></div>
+        <div class="code-row">
+          <div class="ln">10</div>
+          <div class="lc"><span class="t-fn">print</span>(<span class="t-var">posterior</span>)</div>
+          <div class="la"># [1.0, 0.0, 0.0] after HHHT</div>
+        </div>
+
+      </div>
+    </div>
+
+    <div class="annotations">
+      <h4>Pattern breakdown</h4>
+      <div class="ann-item">
+        <div class="ann-line">L2</div>
+        <div class="ann-text"><strong>observations list</strong> — each element is the full likelihood vector for that observation. The order matters: HHHT ≠ THHH in intermediate steps (same final result with enough data).</div>
+      </div>
+      <div class="ann-item">
+        <div class="ann-line">L4</div>
+        <div class="ann-text"><strong>prior.copy()</strong> — creates an independent array. If you write <code style="color:#f472b6">posterior = prior</code> without .copy(), both names point to the same memory. Updating posterior silently corrupts prior.</div>
+      </div>
+      <div class="ann-item">
+        <div class="ann-line">L7</div>
+        <div class="ann-text"><strong>obs * posterior</strong> — note: posterior is now acting as the prior for this step. This is the Bayesian insight: yesterday's posterior is today's prior. The loop encodes this recycling.</div>
+      </div>
+      <div class="ann-item">
+        <div class="ann-line">L8</div>
+        <div class="ann-text"><strong>Normalise inside the loop</strong> — must normalise after every single update, not just at the end. Otherwise numerical errors accumulate and intermediate posteriors are invalid.</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="divider"></div>
+
+
+  <!-- ══════════════════════════════════════════ -->
+  <!-- SECTION 3 – PRIOR CONVERGENCE             -->
+  <!-- ══════════════════════════════════════════ -->
+  <div class="section" id="s3">
+    <div class="section-header">
+      <div class="section-num green">03</div>
+      <h2>Prior Convergence Demo
+        <span class="sub">Show that different priors converge to the same posterior with enough data</span>
+      </h2>
+    </div>
+
+    <div class="lib-row">
+      <span class="lib-pill" style="color:#34d399;border-color:rgba(52,211,153,0.3);background:rgba(52,211,153,0.07)">numpy</span>
+      <span class="lib-pill" style="color:#f472b6;border-color:rgba(244,114,182,0.3);background:rgba(244,114,182,0.07)">matplotlib.pyplot</span>
+    </div>
+    <div class="fn-grid">
+      <div class="fn-card">
+        <div class="fn-sig"><span class="arg">dict</span>.items()</div>
+        <div class="fn-desc">Returns (key, value) pairs. Used to loop over <strong>multiple prior scenarios</strong> simultaneously — clean pattern for comparing models.</div>
+      </div>
+      <div class="fn-card">
+        <div class="fn-sig"><span class="kw">enumerate</span>(<span class="arg">iterable</span>)</div>
+        <div class="fn-desc">Returns (index, value). Used to select subplot axis and <strong>alternate row shading</strong> in plots.</div>
+      </div>
+      <div class="fn-card">
+        <div class="fn-sig"><span class="kw">plt</span>.subplots(<span class="arg">1, 3, figsize=(...)</span>)</div>
+        <div class="fn-desc">Creates 1 row × 3 column subplots. Returns <strong>fig</strong> (whole figure) and <strong>axes</strong> (array of 3 Axes). Access each with axes[i].</div>
+      </div>
+      <div class="fn-card">
+        <div class="fn-sig"><span class="kw">ax</span>.bar(<span class="arg">x, heights, color, alpha</span>)</div>
+        <div class="fn-desc">Draws a bar chart. Returns list of bar objects. Use to iterate and add <strong>text labels on top</strong> of each bar.</div>
+      </div>
+    </div>
+
+    <div class="code-wrap">
+      <div class="code-header">
+        <div class="code-dots"><div class="dot dot-r"></div><div class="dot dot-y"></div><div class="dot dot-g"></div></div>
+        <div class="code-title">prior_convergence.py</div>
+        <div style="width:64px"></div>
+      </div>
+      <div class="code-body">
+
+        <div class="code-row">
+          <div class="ln">1</div>
+          <div class="lc"><span class="t-var">observations</span> <span class="t-op">=</span> [<span class="t-var">likelihood_h</span>, <span class="t-var">likelihood_h</span>, <span class="t-var">likelihood_h</span>, <span class="t-var">likelihood_t</span>]</div>
+          <div class="la">same data for all priors</div>
+        </div>
+        <div class="code-row"><div class="ln">2</div><div class="lc"></div><div class="la"></div></div>
+        <div class="code-row">
+          <div class="ln">3</div>
+          <div class="lc"><span class="t-var">priors_to_test</span> <span class="t-op">=</span> {</div>
+          <div class="la key">dict: name → starting prior vector</div>
+        </div>
+        <div class="code-row">
+          <div class="ln">4</div>
+          <div class="lc">    <span class="t-str">'Uniform Prior'</span>:     [<span class="t-num">1/3</span>, <span class="t-num">1/3</span>, <span class="t-num">1/3</span>],</div>
+          <div class="la">flat: no prior knowledge</div>
+        </div>
+        <div class="code-row">
+          <div class="ln">5</div>
+          <div class="lc">    <span class="t-str">'Skeptical of HH'</span>:   [<span class="t-num">0.5</span>, <span class="t-num">0.1</span>, <span class="t-num">0.4</span>],</div>
+          <div class="la">doubts two-heads coin</div>
+        </div>
+        <div class="code-row">
+          <div class="ln">6</div>
+          <div class="lc">    <span class="t-str">'Confident in HH'</span>:   [<span class="t-num">0.1</span>, <span class="t-num">0.8</span>, <span class="t-num">0.1</span>],</div>
+          <div class="la">strongly believes HH coin</div>
+        </div>
+        <div class="code-row">
+          <div class="ln">7</div>
+          <div class="lc">}</div>
+          <div class="la"></div>
+        </div>
+        <div class="code-row"><div class="ln">8</div><div class="lc"></div><div class="la"></div></div>
+        <div class="code-row">
+          <div class="ln">9</div>
+          <div class="lc"><span class="t-var">fig</span>, <span class="t-var">axes</span> <span class="t-op">=</span> <span class="t-fn">plt.subplots</span>(<span class="t-num">1</span>, <span class="t-num">3</span>, figsize<span class="t-op">=</span>(<span class="t-num">15</span>, <span class="t-num">4</span>))</div>
+          <div class="la">1 row, 3 side-by-side plots</div>
+        </div>
+        <div class="code-row"><div class="ln">10</div><div class="lc"></div><div class="la"></div></div>
+        <div class="code-row">
+          <div class="ln">11</div>
+          <div class="lc"><span class="t-kw">for</span> <span class="t-var">idx</span>, (<span class="t-var">name</span>, <span class="t-var">prior</span>) <span class="t-kw">in</span> <span class="t-fn">enumerate</span>(<span class="t-var">priors_to_test</span>.items()):</div>
+          <div class="la key">idx → axis index, name+prior → scenario</div>
+        </div>
+        <div class="code-row">
+          <div class="ln">12</div>
+          <div class="lc">    <span class="t-var">posterior</span> <span class="t-op">=</span> <span class="t-var">prior</span>.copy()</div>
+          <div class="la">start fresh for each prior</div>
+        </div>
+        <div class="code-row">
+          <div class="ln">13</div>
+          <div class="lc">    <span class="t-kw">for</span> <span class="t-var">obs</span> <span class="t-kw">in</span> <span class="t-var">observations</span>:</div>
+          <div class="la">same update pattern as Section 02</div>
+        </div>
+        <div class="code-row">
+          <div class="ln">14</div>
+          <div class="lc">        <span class="t-var">posterior</span> <span class="t-op">=</span> <span class="t-fn">np.array</span>(<span class="t-var">obs</span>) <span class="t-op">*</span> <span class="t-fn">np.array</span>(<span class="t-var">posterior</span>)</div>
+          <div class="la">wrap in np.array for safety</div>
+        </div>
+        <div class="code-row">
+          <div class="ln">15</div>
+          <div class="lc">        <span class="t-var">posterior</span> <span class="t-op">=</span> <span class="t-var">posterior</span> <span class="t-op">/</span> <span class="t-fn">np.sum</span>(<span class="t-var">posterior</span>)</div>
+          <div class="la">normalise each step</div>
+        </div>
+        <div class="code-row"><div class="ln">16</div><div class="lc"></div><div class="la"></div></div>
+        <div class="code-row">
+          <div class="ln">17</div>
+          <div class="lc">    <span class="t-var">ax</span> <span class="t-op">=</span> <span class="t-var">axes</span>[<span class="t-var">idx</span>]</div>
+          <div class="la">select correct subplot</div>
+        </div>
+        <div class="code-row">
+          <div class="ln">18</div>
+          <div class="lc">    <span class="t-var">bars</span> <span class="t-op">=</span> <span class="t-var">ax</span>.<span class="t-fn">bar</span>(<span class="t-var">coins</span>, <span class="t-var">posterior</span>, color<span class="t-op">=</span><span class="t-var">colors</span>, alpha<span class="t-op">=</span><span class="t-num">0.7</span>)</div>
+          <div class="la">bars = list of bar objects</div>
+        </div>
+        <div class="code-row">
+          <div class="ln">19</div>
+          <div class="lc">    <span class="t-var">ax</span>.<span class="t-fn">set_title</span>(<span class="t-str">f'{name}\nStarting: {prior}'</span>)</div>
+          <div class="la">\n creates two-line title</div>
+        </div>
+        <div class="code-row">
+          <div class="ln">20</div>
+          <div class="lc">    <span class="t-kw">for</span> <span class="t-var">bar</span>, <span class="t-var">prob</span> <span class="t-kw">in</span> <span class="t-fn">zip</span>(<span class="t-var">bars</span>, <span class="t-var">posterior</span>):</div>
+          <div class="la key">zip pairs each bar with its value</div>
+        </div>
+        <div class="code-row">
+          <div class="ln">21</div>
+          <div class="lc">        <span class="t-var">ax</span>.<span class="t-fn">text</span>(<span class="t-var">bar</span>.<span class="t-fn">get_x</span>() <span class="t-op">+</span> <span class="t-var">bar</span>.<span class="t-fn">get_width</span>()<span class="t-op">/</span><span class="t-num">2</span>,</div>
+          <div class="la">x = centre of bar</div>
+        </div>
+        <div class="code-row">
+          <div class="ln">22</div>
+          <div class="lc">                <span class="t-var">bar</span>.<span class="t-fn">get_height</span>() <span class="t-op">+</span> <span class="t-num">0.02</span>,</div>
+          <div class="la">y = just above bar top</div>
+        </div>
+        <div class="code-row">
+          <div class="ln">23</div>
+          <div class="lc">                <span class="t-str">f'{prob:.3f}'</span>, ha<span class="t-op">=</span><span class="t-str">'center'</span>)</div>
+          <div class="la">3 decimal places, centred</div>
+        </div>
+        <div class="code-row"><div class="ln">24</div><div class="lc"></div><div class="la"></div></div>
+        <div class="code-row">
+          <div class="ln">25</div>
+          <div class="lc"><span class="t-var">plt</span>.<span class="t-fn">tight_layout</span>()</div>
+          <div class="la">auto-adjust subplot spacing</div>
+        </div>
+        <div class="code-row">
+          <div class="ln">26</div>
+          <div class="lc"><span class="t-var">plt</span>.<span class="t-fn">show</span>()</div>
+          <div class="la">render all 3 subplots</div>
+        </div>
+
+      </div>
+    </div>
+
+    <div class="annotations">
+      <h4>Pattern breakdown</h4>
+      <div class="ann-item">
+        <div class="ann-line">L11</div>
+        <div class="ann-text"><strong>enumerate(dict.items())</strong> — combines index (for axes[]) with key-value unpacking (name, prior). This is the standard pattern for "loop + subplot index".</div>
+      </div>
+      <div class="ann-item">
+        <div class="ann-line">L20–23</div>
+        <div class="ann-text"><strong>zip(bars, posterior)</strong> pairs each bar object with its numeric height. Then <code style="color:#f472b6">bar.get_x() + bar.get_width()/2</code> finds the bar's horizontal centre — standard pattern for centred bar labels.</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="divider"></div>
+
+
+  <!-- ══════════════════════════════════════════ -->
+  <!-- SECTION 4 – MONTY HALL SIMULATION         -->
+  <!-- ══════════════════════════════════════════ -->
+  <div class="section" id="s4">
+    <div class="section-header">
+      <div class="section-num orange">04</div>
+      <h2>Monty Hall Simulation
+        <span class="sub">Frequentist simulation to verify the 2/3 switching result empirically</span>
+      </h2>
+    </div>
+
+    <div class="lib-row">
+      <span class="lib-pill" style="color:#fb923c;border-color:rgba(251,146,60,0.3);background:rgba(251,146,60,0.07)">numpy</span>
+    </div>
+    <div class="fn-grid">
+      <div class="fn-card">
+        <div class="fn-sig"><span class="kw">np</span>.random.<span class="fn-sig">randint</span>(<span class="arg">1, 4</span>)</div>
+        <div class="fn-desc">Random integer in [1, 3] — note <strong>upper bound is exclusive</strong>. Used to randomly place car and player's pick.</div>
+      </div>
+      <div class="fn-card">
+        <div class="fn-sig"><span class="kw">np</span>.random.<span class="fn-sig">choice</span>(<span class="arg">list</span>)</div>
+        <div class="fn-desc">Uniformly picks one element from a list. Used to <strong>randomly select which valid door the host opens</strong> when multiple are available.</div>
+      </div>
+      <div class="fn-card">
+        <div class="fn-sig">[<span class="arg">d</span> <span class="kw">for</span> <span class="arg">d</span> <span class="kw">in</span> [...] <span class="kw">if</span> <span class="arg">condition</span>]</div>
+        <div class="fn-desc">List comprehension filter. Used twice: once to find <strong>valid host doors</strong>, once to find the <strong>switch target door</strong>.</div>
+      </div>
+      <div class="fn-card">
+        <div class="fn-sig"><span class="arg">filtered_list</span>[<span class="arg">0</span>]</div>
+        <div class="fn-desc">Unpack a single-item list. After filtering to one remaining door, <strong>[0] extracts it</strong> from the list wrapper.</div>
+      </div>
+    </div>
+
+    <div class="code-wrap">
+      <div class="code-header">
+        <div class="code-dots"><div class="dot dot-r"></div><div class="dot dot-y"></div><div class="dot dot-g"></div></div>
+        <div class="code-title">monty_hall_simulation.py</div>
+        <div style="width:64px"></div>
+      </div>
+      <div class="code-body">
+
+        <div class="code-row">
+          <div class="ln">1</div>
+          <div class="lc"><span class="t-kw">import</span> <span class="t-var">numpy</span> <span class="t-kw">as</span> <span class="t-var">np</span></div>
+          <div class="la"></div>
+        </div>
+        <div class="code-row"><div class="ln">2</div><div class="lc"></div><div class="la"></div></div>
+        <div class="code-row">
+          <div class="ln">3</div>
+          <div class="lc"><span class="t-var">no_change_wins</span> <span class="t-op">=</span> <span class="t-num">0</span></div>
+          <div class="la">counter for stay strategy</div>
+        </div>
+        <div class="code-row">
+          <div class="ln">4</div>
+          <div class="lc"><span class="t-var">change_wins</span>    <span class="t-op">=</span> <span class="t-num">0</span></div>
+          <div class="la">counter for switch strategy</div>
+        </div>
+        <div class="code-row"><div class="ln">5</div><div class="lc"></div><div class="la"></div></div>
+        <div class="code-row">
+          <div class="ln">6</div>
+          <div class="lc"><span class="t-kw">for</span> <span class="t-var">i</span> <span class="t-kw">in</span> <span class="t-fn">range</span>(<span class="t-num">10000</span>):</div>
+          <div class="la">10k trials for stable estimate</div>
+        </div>
+        <div class="code-row">
+          <div class="ln">7</div>
+          <div class="lc">    <span class="t-var">car</span>  <span class="t-op">=</span> <span class="t-fn">np.random.randint</span>(<span class="t-num">1</span>, <span class="t-num">4</span>)</div>
+          <div class="la key">randint(1,4) → {1,2,3} excl. upper</div>
+        </div>
+        <div class="code-row">
+          <div class="ln">8</div>
+          <div class="lc">    <span class="t-var">pick</span> <span class="t-op">=</span> <span class="t-fn">np.random.randint</span>(<span class="t-num">1</span>, <span class="t-num">4</span>)</div>
+          <div class="la">player's initial door choice</div>
+        </div>
+        <div class="code-row"><div class="ln">9</div><div class="lc"></div><div class="la"></div></div>
+        <div class="code-row">
+          <div class="ln">10</div>
+          <div class="lc">    <span class="t-cm"># Host: open a door that is NOT pick AND NOT car</span></div>
+          <div class="la"></div>
+        </div>
+        <div class="code-row">
+          <div class="ln">11</div>
+          <div class="lc">    <span class="t-var">available</span> <span class="t-op">=</span> [<span class="t-var">d</span> <span class="t-kw">for</span> <span class="t-var">d</span> <span class="t-kw">in</span> [<span class="t-num">1</span>,<span class="t-num">2</span>,<span class="t-num">3</span>] <span class="t-kw">if</span> <span class="t-var">d</span> <span class="t-op">!=</span> <span class="t-var">pick</span> <span class="t-kw">and</span> <span class="t-var">d</span> <span class="t-op">!=</span> <span class="t-var">car</span>]</div>
+          <div class="la key">list comprehension: host's valid doors</div>
+        </div>
+        <div class="code-row">
+          <div class="ln">12</div>
+          <div class="lc">    <span class="t-var">opened</span>    <span class="t-op">=</span> <span class="t-fn">np.random.choice</span>(<span class="t-var">available</span>)</div>
+          <div class="la">host picks one randomly from valid</div>
+        </div>
+        <div class="code-row"><div class="ln">13</div><div class="lc"></div><div class="la"></div></div>
+        <div class="code-row">
+          <div class="ln">14</div>
+          <div class="lc">    <span class="t-cm"># Strategy 1: Stay</span></div>
+          <div class="la"></div>
+        </div>
+        <div class="code-row">
+          <div class="ln">15</div>
+          <div class="lc">    <span class="t-kw">if</span> <span class="t-var">pick</span> <span class="t-op">==</span> <span class="t-var">car</span>:</div>
+          <div class="la">win only if original pick = car</div>
+        </div>
+        <div class="code-row">
+          <div class="ln">16</div>
+          <div class="lc">        <span class="t-var">no_change_wins</span> <span class="t-op">+=</span> <span class="t-num">1</span></div>
+          <div class="la"></div>
+        </div>
+        <div class="code-row"><div class="ln">17</div><div class="lc"></div><div class="la"></div></div>
+        <div class="code-row">
+          <div class="ln">18</div>
+          <div class="lc">    <span class="t-cm"># Strategy 2: Switch</span></div>
+          <div class="la"></div>
+        </div>
+        <div class="code-row">
+          <div class="ln">19</div>
+          <div class="lc">    <span class="t-var">remaining</span> <span class="t-op">=</span> [<span class="t-var">d</span> <span class="t-kw">for</span> <span class="t-var">d</span> <span class="t-kw">in</span> [<span class="t-num">1</span>,<span class="t-num">2</span>,<span class="t-num">3</span>]</div>
+          <div class="la key">filter out pick AND opened door</div>
+        </div>
+        <div class="code-row">
+          <div class="ln">20</div>
+          <div class="lc">                     <span class="t-kw">if</span> <span class="t-var">d</span> <span class="t-op">!=</span> <span class="t-var">pick</span> <span class="t-kw">and</span> <span class="t-var">d</span> <span class="t-op">!=</span> <span class="t-var">opened</span>][<span class="t-num">0</span>]</div>
+          <div class="la warn">[0] unpacks the 1-item list</div>
+        </div>
+        <div class="code-row">
+          <div class="ln">21</div>
+          <div class="lc">    <span class="t-kw">if</span> <span class="t-var">remaining</span> <span class="t-op">==</span> <span class="t-var">car</span>:</div>
+          <div class="la">win if switch target = car</div>
+        </div>
+        <div class="code-row">
+          <div class="ln">22</div>
+          <div class="lc">        <span class="t-var">change_wins</span> <span class="t-op">+=</span> <span class="t-num">1</span></div>
+          <div class="la"></div>
+        </div>
+        <div class="code-row"><div class="ln">23</div><div class="lc"></div><div class="la"></div></div>
+        <div class="code-row">
+          <div class="ln">24</div>
+          <div class="lc"><span class="t-fn">print</span>(<span class="t-var">change_wins</span>    <span class="t-op">/</span> <span class="t-num">10000</span>)</div>
+          <div class="la"># ~0.667 — switching wins</div>
+        </div>
+        <div class="code-row">
+          <div class="ln">25</div>
+          <div class="lc"><span class="t-fn">print</span>(<span class="t-var">no_change_wins</span> <span class="t-op">/</span> <span class="t-num">10000</span>)</div>
+          <div class="la"># ~0.333 — staying loses</div>
+        </div>
+
+      </div>
+    </div>
+
+    <div class="annotations">
+      <h4>Pattern breakdown</h4>
+      <div class="ann-item">
+        <div class="ann-line">L11</div>
+        <div class="ann-text"><strong>Host constraint list comprehension</strong> — two conditions: <code style="color:#f472b6">d != pick</code> (host can't open your door) AND <code style="color:#f472b6">d != car</code> (host never reveals the car). This models the host's informed, constrained behaviour.</div>
+      </div>
+      <div class="ann-item">
+        <div class="ann-line">L19–20</div>
+        <div class="ann-text"><strong>Switch target</strong> — remove pick AND opened → exactly one door remains. <code style="color:#fb923c">[0]</code> extracts it from the list. If you forget [0], you get a list, not an int, and the == comparison fails silently.</div>
+      </div>
+      <div class="ann-item">
+        <div class="ann-line">L15–22</div>
+        <div class="ann-text"><strong>Both strategies in one loop</strong> — elegant efficiency. The same trial evaluates stay AND switch simultaneously, so you don't need two separate simulation loops.</div>
+      </div>
+    </div>
+
+    <div class="trap">
+      <div class="trap-icon">⚠️</div>
+      <div class="trap-body"><strong>Off-by-one:</strong> <code style="color:var(--accent4)">np.random.randint(1, 4)</code> returns {1, 2, 3} — upper bound is EXCLUSIVE. Writing <code style="color:var(--accent4)">randint(1, 3)</code> would only give {1, 2} and break the simulation.</div>
+    </div>
+  </div>
+
+  <div class="divider"></div>
+
+
+  <!-- ══════════════════════════════════════════ -->
+  <!-- SECTION 5 – BAYESIAN REGRESSION           -->
+  <!-- ══════════════════════════════════════════ -->
+  <div class="section" id="s5">
+    <div class="section-header">
+      <div class="section-num purple">05</div>
+      <h2>Bayesian Regression — Posterior Cloud
+        <span class="sub">Frequentist single line vs. Bayesian distribution of plausible lines</span>
+      </h2>
+    </div>
+
+    <div class="lib-row">
+      <span class="lib-pill" style="color:#a78bfa;border-color:rgba(167,139,250,0.3);background:rgba(167,139,250,0.07)">numpy</span>
+      <span class="lib-pill" style="color:#f472b6;border-color:rgba(244,114,182,0.3);background:rgba(244,114,182,0.07)">matplotlib.pyplot</span>
+      <span class="lib-pill" style="color:#38bdf8;border-color:rgba(56,189,248,0.3);background:rgba(56,189,248,0.07)">numpy.polynomial</span>
+    </div>
+    <div class="fn-grid">
+      <div class="fn-card">
+        <div class="fn-sig"><span class="kw">np</span>.linspace(<span class="arg">start, stop, n</span>)</div>
+        <div class="fn-desc">Creates n evenly-spaced values between start and stop. Used to generate <strong>X axis for plotting smooth prediction lines</strong>.</div>
+      </div>
+      <div class="fn-card">
+        <div class="fn-sig"><span class="kw">np</span>.random.normal(<span class="arg">mean, std, n</span>)</div>
+        <div class="fn-desc">Samples n values from a Normal distribution. Used to <strong>simulate the Bayesian posterior</strong> over slope and intercept.</div>
+      </div>
+      <div class="fn-card">
+        <div class="fn-sig"><span class="kw">Polynomial</span>.fit(<span class="arg">X, y, deg</span>)</div>
+        <div class="fn-desc">Least-squares polynomial fit. <strong>Returns a Polynomial in Chebyshev basis</strong> — must call .convert() to get standard form.</div>
+      </div>
+      <div class="fn-card">
+        <div class="fn-sig">.<span class="fn-sig">convert</span>().<span class="fn-sig">coef</span></div>
+        <div class="fn-desc">Converts to standard basis and returns <strong>[intercept, slope, ...]</strong>. Without .convert(), coefficients are in the wrong basis.</div>
+      </div>
+      <div class="fn-card">
+        <div class="fn-sig"><span class="kw">np</span>.random.seed(<span class="arg">42</span>)</div>
+        <div class="fn-desc">Sets the random seed for <strong>reproducibility</strong>. Same seed → same random numbers every run. Use before any random data generation.</div>
+      </div>
+      <div class="fn-card">
+        <div class="fn-sig"><span class="kw">plt</span>.subplots(<span class="arg">1, 2, figsize=(...)</span>)</div>
+        <div class="fn-desc">Side-by-side comparison plots. <strong>fig</strong> = whole canvas, <strong>(ax1, ax2)</strong> = individual axes. Unpack directly when count is small.</div>
+      </div>
+    </div>
+
+    <div class="code-wrap">
+      <div class="code-header">
+        <div class="code-dots"><div class="dot dot-r"></div><div class="dot dot-y"></div><div class="dot dot-g"></div></div>
+        <div class="code-title">bayesian_regression.py</div>
+        <div style="width:64px"></div>
+      </div>
+      <div class="code-body">
+
+        <div class="code-row">
+          <div class="ln">1</div>
+          <div class="lc"><span class="t-kw">import</span> <span class="t-var">numpy</span> <span class="t-kw">as</span> <span class="t-var">np</span></div>
+          <div class="la"></div>
+        </div>
+        <div class="code-row">
+          <div class="ln">2</div>
+          <div class="lc"><span class="t-kw">import</span> <span class="t-var">matplotlib.pyplot</span> <span class="t-kw">as</span> <span class="t-var">plt</span></div>
+          <div class="la"></div>
+        </div>
+        <div class="code-row">
+          <div class="ln">3</div>
+          <div class="lc"><span class="t-kw">from</span> <span class="t-var">numpy.polynomial.polynomial</span> <span class="t-kw">import</span> <span class="t-cls">Polynomial</span></div>
+          <div class="la key">for least-squares fit</div>
+        </div>
+        <div class="code-row"><div class="ln">4</div><div class="lc"></div><div class="la"></div></div>
+        <div class="code-row">
+          <div class="ln">5</div>
+          <div class="lc"><span class="t-cm"># ── Generate synthetic data ───────────────────────</span></div>
+          <div class="la"></div>
+        </div>
+        <div class="code-row">
+          <div class="ln">6</div>
+          <div class="lc"><span class="t-fn">np.random.seed</span>(<span class="t-num">42</span>)</div>
+          <div class="la">reproducibility — always set seed first</div>
+        </div>
+        <div class="code-row">
+          <div class="ln">7</div>
+          <div class="lc"><span class="t-var">X</span> <span class="t-op">=</span> <span class="t-fn">np.linspace</span>(<span class="t-num">0</span>, <span class="t-num">10</span>, <span class="t-num">20</span>)</div>
+          <div class="la">20 evenly spaced X values 0–10</div>
+        </div>
+        <div class="code-row">
+          <div class="ln">8</div>
+          <div class="lc"><span class="t-var">y</span> <span class="t-op">=</span> <span class="t-num">2.0</span> <span class="t-op">*</span> <span class="t-var">X</span> <span class="t-op">+</span> <span class="t-num">1.0</span> <span class="t-op">+</span> <span class="t-fn">np.random.normal</span>(<span class="t-num">0</span>, <span class="t-num">1.5</span>, <span class="t-num">20</span>)</div>
+          <div class="la key">true line + Gaussian noise σ=1.5</div>
+        </div>
+        <div class="code-row"><div class="ln">9</div><div class="lc"></div><div class="la"></div></div>
+        <div class="code-row">
+          <div class="ln">10</div>
+          <div class="lc"><span class="t-cm"># ── Frequentist: find single best line ────────────</span></div>
+          <div class="la"></div>
+        </div>
+        <div class="code-row">
+          <div class="ln">11</div>
+          <div class="lc"><span class="t-var">fit</span>            <span class="t-op">=</span> <span class="t-cls">Polynomial</span>.<span class="t-fn">fit</span>(<span class="t-var">X</span>, <span class="t-var">y</span>, <span class="t-num">1</span>)</div>
+          <div class="la">degree 1 = linear fit</div>
+        </div>
+        <div class="code-row">
+          <div class="ln">12</div>
+          <div class="lc"><span class="t-var">b_freq</span>, <span class="t-var">m_freq</span> <span class="t-op">=</span> <span class="t-var">fit</span>.<span class="t-fn">convert</span>().<span class="t-var">coef</span></div>
+          <div class="la warn">.convert() needed! coef = [b, m]</div>
+        </div>
+        <div class="code-row"><div class="ln">13</div><div class="lc"></div><div class="la"></div></div>
+        <div class="code-row">
+          <div class="ln">14</div>
+          <div class="lc"><span class="t-cm"># ── Bayesian: sample posterior distribution ───────</span></div>
+          <div class="la"></div>
+        </div>
+        <div class="code-row">
+          <div class="ln">15</div>
+          <div class="lc"><span class="t-var">n_samples</span>         <span class="t-op">=</span> <span class="t-num">100</span></div>
+          <div class="la"></div>
+        </div>
+        <div class="code-row">
+          <div class="ln">16</div>
+          <div class="lc"><span class="t-var">slope_samples</span>     <span class="t-op">=</span> <span class="t-fn">np.random.normal</span>(<span class="t-var">m_freq</span>, <span class="t-num">0.15</span>, <span class="t-var">n_samples</span>)</div>
+          <div class="la key">posterior over slope: centred at MLE</div>
+        </div>
+        <div class="code-row">
+          <div class="ln">17</div>
+          <div class="lc"><span class="t-var">intercept_samples</span> <span class="t-op">=</span> <span class="t-fn">np.random.normal</span>(<span class="t-var">b_freq</span>, <span class="t-num">0.40</span>, <span class="t-var">n_samples</span>)</div>
+          <div class="la">posterior over intercept</div>
+        </div>
+        <div class="code-row"><div class="ln">18</div><div class="lc"></div><div class="la"></div></div>
+        <div class="code-row">
+          <div class="ln">19</div>
+          <div class="lc"><span class="t-cm"># ── Plot ──────────────────────────────────────────</span></div>
+          <div class="la"></div>
+        </div>
+        <div class="code-row">
+          <div class="ln">20</div>
+          <div class="lc"><span class="t-var">fig</span>, (<span class="t-var">ax1</span>, <span class="t-var">ax2</span>) <span class="t-op">=</span> <span class="t-fn">plt.subplots</span>(<span class="t-num">1</span>, <span class="t-num">2</span>, figsize<span class="t-op">=</span>(<span class="t-num">14</span>, <span class="t-num">5</span>))</div>
+          <div class="la">unpack 2 axes directly</div>
+        </div>
+        <div class="code-row">
+          <div class="ln">21</div>
+          <div class="lc"><span class="t-var">X_line</span> <span class="t-op">=</span> <span class="t-fn">np.linspace</span>(<span class="t-num">0</span>, <span class="t-num">10</span>, <span class="t-num">100</span>)</div>
+          <div class="la">100 pts = smooth line for plotting</div>
+        </div>
+        <div class="code-row"><div class="ln">22</div><div class="lc"></div><div class="la"></div></div>
+        <div class="code-row">
+          <div class="ln">23</div>
+          <div class="lc"><span class="t-cm"># Frequentist: one line</span></div>
+          <div class="la"></div>
+        </div>
+        <div class="code-row">
+          <div class="ln">24</div>
+          <div class="lc"><span class="t-var">ax1</span>.<span class="t-fn">scatter</span>(<span class="t-var">X</span>, <span class="t-var">y</span>, alpha<span class="t-op">=</span><span class="t-num">0.6</span>, s<span class="t-op">=</span><span class="t-num">50</span>)</div>
+          <div class="la">raw data points</div>
+        </div>
+        <div class="code-row">
+          <div class="ln">25</div>
+          <div class="lc"><span class="t-var">ax1</span>.<span class="t-fn">plot</span>(<span class="t-var">X_line</span>, <span class="t-var">m_freq</span> <span class="t-op">*</span> <span class="t-var">X_line</span> <span class="t-op">+</span> <span class="t-var">b_freq</span>, <span class="t-str">'r-'</span>, lw<span class="t-op">=</span><span class="t-num">2</span>)</div>
+          <div class="la">single best-fit line</div>
+        </div>
+        <div class="code-row"><div class="ln">26</div><div class="lc"></div><div class="la"></div></div>
+        <div class="code-row">
+          <div class="ln">27</div>
+          <div class="lc"><span class="t-cm"># Bayesian: cloud of plausible lines</span></div>
+          <div class="la"></div>
+        </div>
+        <div class="code-row">
+          <div class="ln">28</div>
+          <div class="lc"><span class="t-kw">for</span> <span class="t-var">i</span> <span class="t-kw">in</span> <span class="t-fn">range</span>(<span class="t-num">50</span>):</div>
+          <div class="la">50 sample lines from posterior</div>
+        </div>
+        <div class="code-row">
+          <div class="ln">29</div>
+          <div class="lc">    <span class="t-var">y_s</span> <span class="t-op">=</span> <span class="t-var">slope_samples</span>[<span class="t-var">i</span>] <span class="t-op">*</span> <span class="t-var">X_line</span> <span class="t-op">+</span> <span class="t-var">intercept_samples</span>[<span class="t-var">i</span>]</div>
+          <div class="la">each sample = one plausible line</div>
+        </div>
+        <div class="code-row">
+          <div class="ln">30</div>
+          <div class="lc">    <span class="t-var">ax2</span>.<span class="t-fn">plot</span>(<span class="t-var">X_line</span>, <span class="t-var">y_s</span>, <span class="t-str">'r-'</span>, alpha<span class="t-op">=</span><span class="t-num">0.1</span>)</div>
+          <div class="la key">alpha=0.1 → overlap creates cloud</div>
+        </div>
+        <div class="code-row"><div class="ln">31</div><div class="lc"></div><div class="la"></div></div>
+        <div class="code-row">
+          <div class="ln">32</div>
+          <div class="lc"><span class="t-cm"># Plot posterior mean on top</span></div>
+          <div class="la"></div>
+        </div>
+        <div class="code-row">
+          <div class="ln">33</div>
+          <div class="lc"><span class="t-var">ax2</span>.<span class="t-fn">plot</span>(<span class="t-var">X_line</span>, <span class="t-var">m_freq</span> <span class="t-op">*</span> <span class="t-var">X_line</span> <span class="t-op">+</span> <span class="t-var">b_freq</span>, <span class="t-str">'b-'</span>, lw<span class="t-op">=</span><span class="t-num">2.5</span>)</div>
+          <div class="la">mean of posterior = freq. estimate</div>
+        </div>
+        <div class="code-row">
+          <div class="ln">34</div>
+          <div class="lc"><span class="t-fn">plt.tight_layout</span>(); <span class="t-fn">plt.show</span>()</div>
+          <div class="la"></div>
+        </div>
+
+      </div>
+    </div>
+
+    <div class="annotations">
+      <h4>Pattern breakdown</h4>
+      <div class="ann-item">
+        <div class="ann-line">L12</div>
+        <div class="ann-text"><strong>Polynomial.fit().convert().coef</strong> — three chained calls. fit() works in Chebyshev space (numerically stable). convert() maps back to standard poly. coef = <code style="color:#f472b6">[intercept, slope]</code> — intercept is index 0.</div>
+      </div>
+      <div class="ann-item">
+        <div class="ann-line">L16–17</div>
+        <div class="ann-text"><strong>np.random.normal(MLE, uncertainty, n)</strong> — the Bayesian "shortcut" in this notebook. Real Bayesian posterior uses MCMC (PyMC3). Here, Normal centred at MLE with a manually chosen std simulates the concept.</div>
+      </div>
+      <div class="ann-item">
+        <div class="ann-line">L30</div>
+        <div class="ann-text"><strong>alpha=0.1</strong> — the cloud trick. 50 lines × 10% opacity. Where lines cluster densely, the colour intensifies. Cloud width = parameter uncertainty. Narrower cloud after more data = this width should shrink.</div>
+      </div>
+    </div>
+
+    <div class="trap">
+      <div class="trap-icon">⚠️</div>
+      <div class="trap-body"><strong>Polynomial.fit() trap:</strong> <code style="color:var(--accent4)">.coef</code> without <code style="color:var(--accent4)">.convert()</code> gives Chebyshev coefficients, not standard [intercept, slope]. The numbers will be wrong and misleading.</div>
+    </div>
+  </div>
+
+
+  <!-- Footer -->
+  <div style="margin-top:80px;padding-top:24px;border-top:1px solid var(--border);display:flex;justify-content:space-between;align-items:center;">
+    <div style="font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--text-muted);">Source: Bayesian_Approach_2026.ipynb</div>
+    <div style="font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--text-muted);">5 patterns · numpy · matplotlib · Polynomial</div>
+  </div>
+
+</div>
+</body>
+</html>

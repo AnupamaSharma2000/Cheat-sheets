@@ -1,0 +1,876 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Sampling Methods — Coding Cheatsheet</title>
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;600;700&family=Syne:wght@400;600;700;800&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #0a0e1a;
+    --surface: #111827;
+    --surface2: #1a2235;
+    --border: #1f2d45;
+    --accent1: #00d4ff;
+    --accent2: #7c3aed;
+    --accent3: #10b981;
+    --accent4: #f59e0b;
+    --accent5: #ef4444;
+    --text: #e2e8f0;
+    --text-muted: #64748b;
+    --text-dim: #94a3b8;
+    --code-bg: #0d1117;
+    --keyword: #ff79c6;
+    --func: #50fa7b;
+    --string: #f1fa8c;
+    --comment: #6272a4;
+    --number: #bd93f9;
+    --var: #8be9fd;
+    --operator: #ff79c6;
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'DM Sans', sans-serif;
+    min-height: 100vh;
+    overflow-x: hidden;
+  }
+
+  /* ── BACKGROUND GRID ── */
+  body::before {
+    content: '';
+    position: fixed;
+    inset: 0;
+    background-image:
+      linear-gradient(rgba(0,212,255,0.03) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(0,212,255,0.03) 1px, transparent 1px);
+    background-size: 40px 40px;
+    pointer-events: none;
+    z-index: 0;
+  }
+
+  .container {
+    max-width: 1100px;
+    margin: 0 auto;
+    padding: 0 24px 80px;
+    position: relative;
+    z-index: 1;
+  }
+
+  /* ── HEADER ── */
+  header {
+    padding: 60px 0 40px;
+    border-bottom: 1px solid var(--border);
+    margin-bottom: 48px;
+    position: relative;
+  }
+
+  .header-tag {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 11px;
+    color: var(--accent1);
+    letter-spacing: 3px;
+    text-transform: uppercase;
+    margin-bottom: 16px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+
+  .header-tag::before {
+    content: '';
+    display: inline-block;
+    width: 24px;
+    height: 1px;
+    background: var(--accent1);
+  }
+
+  h1 {
+    font-family: 'Syne', sans-serif;
+    font-size: clamp(32px, 5vw, 52px);
+    font-weight: 800;
+    line-height: 1.1;
+    background: linear-gradient(135deg, #fff 0%, var(--accent1) 60%, var(--accent2) 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    margin-bottom: 12px;
+  }
+
+  .subtitle {
+    font-size: 15px;
+    color: var(--text-muted);
+    font-weight: 300;
+    letter-spacing: 0.3px;
+  }
+
+  /* ── TOC ── */
+  .toc {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin-top: 24px;
+  }
+
+  .toc-item {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 11px;
+    padding: 6px 14px;
+    border-radius: 20px;
+    border: 1px solid var(--border);
+    color: var(--text-dim);
+    cursor: pointer;
+    transition: all 0.2s;
+    text-decoration: none;
+  }
+
+  .toc-item:hover { border-color: var(--accent1); color: var(--accent1); }
+  .toc-item.t1 { border-color: rgba(0,212,255,0.3); color: var(--accent1); }
+  .toc-item.t2 { border-color: rgba(124,58,237,0.3); color: #a78bfa; }
+  .toc-item.t3 { border-color: rgba(16,185,129,0.3); color: var(--accent3); }
+  .toc-item.t4 { border-color: rgba(245,158,11,0.3); color: var(--accent4); }
+  .toc-item.t5 { border-color: rgba(239,68,68,0.3); color: var(--accent5); }
+
+  /* ── SECTION ── */
+  .section {
+    margin-bottom: 56px;
+    animation: fadeUp 0.5s ease both;
+  }
+
+  @keyframes fadeUp {
+    from { opacity: 0; transform: translateY(16px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+
+  .section-header {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    margin-bottom: 24px;
+    padding-bottom: 16px;
+    border-bottom: 1px solid var(--border);
+  }
+
+  .section-num {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 11px;
+    font-weight: 700;
+    padding: 4px 10px;
+    border-radius: 4px;
+    letter-spacing: 1px;
+  }
+
+  .s1 .section-num { background: rgba(0,212,255,0.1); color: var(--accent1); border: 1px solid rgba(0,212,255,0.2); }
+  .s2 .section-num { background: rgba(124,58,237,0.1); color: #a78bfa; border: 1px solid rgba(124,58,237,0.2); }
+  .s3 .section-num { background: rgba(16,185,129,0.1); color: var(--accent3); border: 1px solid rgba(16,185,129,0.2); }
+  .s4 .section-num { background: rgba(245,158,11,0.1); color: var(--accent4); border: 1px solid rgba(245,158,11,0.2); }
+  .s5 .section-num { background: rgba(239,68,68,0.1); color: var(--accent5); border: 1px solid rgba(239,68,68,0.2); }
+
+  .section-title {
+    font-family: 'Syne', sans-serif;
+    font-size: 22px;
+    font-weight: 700;
+    color: var(--text);
+  }
+
+  .section-badge {
+    margin-left: auto;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 10px;
+    padding: 3px 10px;
+    border-radius: 20px;
+    background: rgba(239,68,68,0.1);
+    color: var(--accent5);
+    border: 1px solid rgba(239,68,68,0.2);
+  }
+
+  /* ── CARD ── */
+  .card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    overflow: hidden;
+    margin-bottom: 20px;
+    transition: border-color 0.2s;
+  }
+
+  .card:hover { border-color: var(--border); }
+
+  .card-header {
+    padding: 14px 20px;
+    background: var(--surface2);
+    border-bottom: 1px solid var(--border);
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    cursor: pointer;
+    user-select: none;
+  }
+
+  .card-header:hover { background: #1f2d3d; }
+
+  .card-dot {
+    width: 8px; height: 8px;
+    border-radius: 50%;
+  }
+
+  .s1 .card-dot { background: var(--accent1); box-shadow: 0 0 6px var(--accent1); }
+  .s2 .card-dot { background: #a78bfa; box-shadow: 0 0 6px #a78bfa; }
+  .s3 .card-dot { background: var(--accent3); box-shadow: 0 0 6px var(--accent3); }
+  .s4 .card-dot { background: var(--accent4); box-shadow: 0 0 6px var(--accent4); }
+  .s5 .card-dot { background: var(--accent5); box-shadow: 0 0 6px var(--accent5); }
+
+  .card-title {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--text);
+    flex: 1;
+  }
+
+  .card-tag {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 10px;
+    color: var(--text-muted);
+    padding: 2px 8px;
+    border-radius: 4px;
+    background: rgba(255,255,255,0.04);
+    border: 1px solid var(--border);
+  }
+
+  .chevron {
+    color: var(--text-muted);
+    font-size: 12px;
+    transition: transform 0.2s;
+  }
+
+  .card.collapsed .chevron { transform: rotate(-90deg); }
+
+  /* ── KEY CONCEPT BOX ── */
+  .concept {
+    padding: 14px 20px;
+    background: rgba(0,0,0,0.2);
+    border-bottom: 1px solid var(--border);
+    font-size: 13px;
+    color: var(--text-dim);
+    line-height: 1.6;
+  }
+
+  .concept strong { color: var(--text); font-weight: 500; }
+
+  .concept .pill {
+    display: inline-block;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 11px;
+    padding: 2px 8px;
+    border-radius: 4px;
+    margin: 0 2px;
+  }
+
+  .pill-blue { background: rgba(0,212,255,0.1); color: var(--accent1); }
+  .pill-green { background: rgba(16,185,129,0.1); color: var(--accent3); }
+  .pill-yellow { background: rgba(245,158,11,0.1); color: var(--accent4); }
+  .pill-red { background: rgba(239,68,68,0.1); color: var(--accent5); }
+  .pill-purple { background: rgba(124,58,237,0.1); color: #a78bfa; }
+
+  /* ── WARNING BOX ── */
+  .warn {
+    margin: 0 20px 16px;
+    padding: 10px 14px;
+    border-radius: 8px;
+    border-left: 3px solid var(--accent4);
+    background: rgba(245,158,11,0.05);
+    font-size: 12px;
+    color: #fbbf24;
+    display: flex;
+    gap: 8px;
+    align-items: flex-start;
+  }
+
+  /* ── CODE BLOCK ── */
+  .code-wrap {
+    padding: 0 20px 20px;
+  }
+
+  .code-block {
+    background: var(--code-bg);
+    border-radius: 8px;
+    border: 1px solid #1e2d3d;
+    overflow: hidden;
+  }
+
+  .code-toolbar {
+    display: flex;
+    align-items: center;
+    padding: 8px 16px;
+    background: #161b22;
+    border-bottom: 1px solid #1e2d3d;
+    gap: 6px;
+  }
+
+  .dot { width: 10px; height: 10px; border-radius: 50%; }
+  .dot-r { background: #ff5f56; }
+  .dot-y { background: #ffbd2e; }
+  .dot-g { background: #27c93f; }
+
+  .code-lang {
+    margin-left: auto;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 10px;
+    color: var(--text-muted);
+  }
+
+  table.code-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 12.5px;
+    line-height: 1.7;
+  }
+
+  table.code-table tr { transition: background 0.1s; }
+  table.code-table tr:hover { background: rgba(255,255,255,0.03); }
+
+  .ln {
+    width: 40px;
+    text-align: right;
+    padding: 1px 14px 1px 8px;
+    color: #3d4f63;
+    user-select: none;
+    font-size: 11px;
+    vertical-align: top;
+    border-right: 1px solid #1e2d3d;
+  }
+
+  .code-line {
+    padding: 1px 16px;
+    white-space: pre;
+    vertical-align: top;
+  }
+
+  .comment-line { color: var(--comment); font-style: italic; }
+
+  .explain-cell {
+    padding: 1px 16px 1px 8px;
+    font-size: 11px;
+    color: var(--comment);
+    font-style: italic;
+    vertical-align: top;
+    white-space: nowrap;
+  }
+
+  /* syntax */
+  .kw { color: var(--keyword); }
+  .fn { color: var(--func); }
+  .st { color: var(--string); }
+  .nm { color: var(--number); }
+  .vr { color: var(--var); }
+  .op { color: var(--operator); }
+  .cm { color: var(--comment); font-style: italic; }
+  .nd { color: #ffb86c; }
+
+  /* ── LIB PILLS ROW ── */
+  .lib-row {
+    padding: 12px 20px;
+    border-bottom: 1px solid var(--border);
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    align-items: center;
+  }
+
+  .lib-label {
+    font-size: 11px;
+    color: var(--text-muted);
+    font-family: 'JetBrains Mono', monospace;
+    margin-right: 4px;
+  }
+
+  .lib-pill {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 11px;
+    padding: 3px 10px;
+    border-radius: 4px;
+    background: rgba(80,250,123,0.08);
+    color: var(--func);
+    border: 1px solid rgba(80,250,123,0.15);
+  }
+
+  /* collapse */
+  .card-body { display: block; }
+  .card.collapsed .card-body { display: none; }
+
+  /* ── SCROLLBAR ── */
+  ::-webkit-scrollbar { width: 6px; height: 6px; }
+  ::-webkit-scrollbar-track { background: var(--bg); }
+  ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
+
+  /* ── FOOTER ── */
+  footer {
+    text-align: center;
+    padding: 32px 0;
+    border-top: 1px solid var(--border);
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 11px;
+    color: var(--text-muted);
+    letter-spacing: 1px;
+  }
+</style>
+</head>
+<body>
+<div class="container">
+
+  <!-- HEADER -->
+  <header>
+    <div class="header-tag">EXAM PREP · CODING CHEATSHEET</div>
+    <h1>Sampling Methods<br>Code Reference</h1>
+    
+    <div class="toc">
+      <a href="#s1" class="toc-item t1">01 · Inverse Transform (Continuous)</a>
+      <a href="#s2" class="toc-item t2">02 · Bernoulli Sampling</a>
+      <a href="#s3" class="toc-item t3">03 · Binomial Sampling</a>
+      <a href="#s4" class="toc-item t4">04 · Categorical Sampling</a>
+      <a href="#s5" class="toc-item t1">05 · Monte Carlo π</a>
+      <a href="#s6" class="toc-item t2">06 · Rejection Sampling</a>
+      <a href="#s7" class="toc-item t3">07 · Importance Sampling</a>
+    </div>
+  </header>
+
+  <!-- ════════════════════════════════════════ -->
+  <!-- SECTION 1: INVERSE TRANSFORM CONTINUOUS -->
+  <!-- ════════════════════════════════════════ -->
+  <section class="section s1" id="s1">
+    <div class="section-header">
+      <span class="section-num">01</span>
+      <h2 class="section-title">Inverse Transform — Exponential</h2>
+      <span class="section-badge">EXAM LIKELY</span>
+    </div>
+
+    <!-- CARD: Math derivation -->
+    <div class="card s1">
+      <div class="card-header" onclick="toggle(this)">
+        <span class="card-dot"></span>
+        <span class="card-title">Math Pattern: How to Derive F⁻¹</span>
+        <span class="card-tag">3-step</span>
+        <span class="chevron">▾</span>
+      </div>
+      <div class="card-body">
+        <div class="concept">
+          <strong>Step 1</strong> — Integrate PDF to get CDF &nbsp;
+          <strong>Step 2</strong> — Set F(x) = p, solve for x &nbsp;
+          <strong>Step 3</strong> — Replace p with U ~ Uniform(0,1)<br><br>
+          Exponential: <span class="pill pill-blue">PDF: λe^(−λx)</span> → <span class="pill pill-green">CDF: 1 − e^(−λx)</span> → <span class="pill pill-yellow">F⁻¹: −ln(1−p)/λ</span>
+        </div>
+        <div class="code-wrap">
+          <div class="code-block">
+            <div class="code-toolbar"><span class="dot dot-r"></span><span class="dot dot-y"></span><span class="dot dot-g"></span><span class="code-lang">python</span></div>
+            <table class="code-table">
+              <tr><td class="ln">1</td><td class="code-line comment-line"># ── LIBRARY FUNCTIONS USED ──────────────────────</td><td class="explain-cell"></td></tr>
+              <tr><td class="ln">2</td><td class="code-line"><span class="kw">import</span> <span class="nd">numpy</span> <span class="kw">as</span> <span class="vr">np</span></td><td class="explain-cell">← always needed</td></tr>
+              <tr><td class="ln">3</td><td class="code-line"><span class="kw">from</span> <span class="nd">scipy</span> <span class="kw">import</span> <span class="nd">stats</span></td><td class="explain-cell">← for comparison/validation</td></tr>
+              <tr><td class="ln">4</td><td class="code-line"></td><td class="explain-cell"></td></tr>
+              <tr><td class="ln">5</td><td class="code-line comment-line"># ── KEY FUNCTIONS ───────────────────────────────</td><td class="explain-cell"></td></tr>
+              <tr><td class="ln">6</td><td class="code-line"><span class="nd">np</span>.<span class="fn">random</span>.<span class="fn">random</span>(<span class="vr">n</span>)</td><td class="explain-cell">← n uniform samples in [0,1)</td></tr>
+              <tr><td class="ln">7</td><td class="code-line"><span class="nd">np</span>.<span class="fn">log</span>(<span class="vr">x</span>)</td><td class="explain-cell">← natural log ln(x)</td></tr>
+              <tr><td class="ln">8</td><td class="code-line"><span class="nd">np</span>.<span class="fn">mean</span>(<span class="vr">X</span>)</td><td class="explain-cell">← empirical mean for validation</td></tr>
+              <tr><td class="ln">9</td><td class="code-line"></td><td class="explain-cell"></td></tr>
+              <tr><td class="ln">10</td><td class="code-line comment-line"># ── ALGORITHM ───────────────────────────────────</td><td class="explain-cell"></td></tr>
+              <tr><td class="ln">11</td><td class="code-line"><span class="vr">lambda_param</span> = <span class="nm">2.0</span></td><td class="explain-cell">← rate parameter λ</td></tr>
+              <tr><td class="ln">12</td><td class="code-line"><span class="vr">n_samples</span>    = <span class="nm">10000</span></td><td class="explain-cell">← how many samples to generate</td></tr>
+              <tr><td class="ln">13</td><td class="code-line"></td><td class="explain-cell"></td></tr>
+              <tr><td class="ln">14</td><td class="code-line"><span class="vr">U</span> = <span class="nd">np</span>.<span class="fn">random</span>.<span class="fn">random</span>(<span class="vr">n_samples</span>)</td><td class="explain-cell">← STEP 1: draw U ~ Uniform(0,1)</td></tr>
+              <tr><td class="ln">15</td><td class="code-line"><span class="vr">X</span> = -<span class="nd">np</span>.<span class="fn">log</span>(<span class="nm">1</span> - <span class="vr">U</span>) / <span class="vr">lambda_param</span></td><td class="explain-cell">← STEP 2: apply F⁻¹ = −ln(1−U)/λ</td></tr>
+              <tr><td class="ln">16</td><td class="code-line"></td><td class="explain-cell"></td></tr>
+              <tr><td class="ln">17</td><td class="code-line comment-line"># ── VALIDATION ──────────────────────────────────</td><td class="explain-cell"></td></tr>
+              <tr><td class="ln">18</td><td class="code-line"><span class="vr">theoretical_mean</span> = <span class="nm">1</span> / <span class="vr">lambda_param</span></td><td class="explain-cell">← E[X] = 1/λ for Exponential</td></tr>
+              <tr><td class="ln">19</td><td class="code-line"><span class="vr">empirical_mean</span>   = <span class="nd">np</span>.<span class="fn">mean</span>(<span class="vr">X</span>)</td><td class="explain-cell">← should ≈ theoretical_mean</td></tr>
+              <tr><td class="ln">20</td><td class="code-line"><span class="fn">print</span>(<span class="vr">abs</span>(<span class="vr">theoretical_mean</span> - <span class="vr">empirical_mean</span>))</td><td class="explain-cell">← error should be tiny</td></tr>
+            </table>
+          </div>
+        </div>
+        <div class="warn">⚠ &nbsp; <span>When domain is [0,1] or [0,∞): lower limit of CDF integral = 0, NOT −∞. Only use −∞ for Normal-type distributions.</span></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ════════════════════════════════════════ -->
+  <!-- SECTION 2: BERNOULLI -->
+  <!-- ════════════════════════════════════════ -->
+  <section class="section s2" id="s2">
+    <div class="section-header">
+      <span class="section-num">02</span>
+      <h2 class="section-title">Bernoulli Sampling</h2>
+    </div>
+
+    <div class="card s2">
+      <div class="card-header" onclick="toggle(this)">
+        <span class="card-dot"></span>
+        <span class="card-title">bernoulli_sample(p) — Inverse Transform, Discrete</span>
+        <span class="card-tag">PMF</span>
+        <span class="chevron">▾</span>
+      </div>
+      <div class="card-body">
+        <div class="concept">
+          P(X=1) = p. Draw U ~ Uniform(0,1). Interval [0, p) has length p — so U lands there with probability p.<br>
+          Key functions: <span class="pill pill-green">np.random.uniform(0,1)</span> <span class="pill pill-blue">bernoulli.rvs(p)</span> for scipy comparison
+        </div>
+        <div class="lib-row">
+          <span class="lib-label">imports:</span>
+          <span class="lib-pill">from scipy.stats import bernoulli</span>
+          <span class="lib-pill">import numpy as np</span>
+        </div>
+        <div class="code-wrap">
+          <div class="code-block">
+            <div class="code-toolbar"><span class="dot dot-r"></span><span class="dot dot-y"></span><span class="dot dot-g"></span><span class="code-lang">python</span></div>
+            <table class="code-table">
+              <tr><td class="ln">1</td><td class="code-line"><span class="kw">def</span> <span class="fn">bernoulli_sample</span>(<span class="vr">p</span>):</td><td class="explain-cell"></td></tr>
+              <tr><td class="ln">2</td><td class="code-line">    <span class="vr">u</span> = <span class="nd">np</span>.<span class="fn">random</span>.<span class="fn">uniform</span>(<span class="nm">0</span>, <span class="nm">1</span>)</td><td class="explain-cell">← draw one uniform sample</td></tr>
+              <tr><td class="ln">3</td><td class="code-line">    <span class="kw">return</span> <span class="nm">1</span> <span class="kw">if</span> <span class="vr">u</span> < <span class="vr">p</span> <span class="kw">else</span> <span class="nm">0</span></td><td class="explain-cell">← [0,p) has length p → P(1)=p</td></tr>
+              <tr><td class="ln">4</td><td class="code-line"></td><td class="explain-cell"></td></tr>
+              <tr><td class="ln">5</td><td class="code-line comment-line"># ── VALIDATE ────────────────────────────────────</td><td class="explain-cell"></td></tr>
+              <tr><td class="ln">6</td><td class="code-line"><span class="vr">n</span> = <span class="nm">10000</span></td><td class="explain-cell"></td></tr>
+              <tr><td class="ln">7</td><td class="code-line"><span class="vr">samples</span> = <span class="nd">np</span>.<span class="fn">array</span>([<span class="fn">bernoulli_sample</span>(<span class="nm">0.5</span>) <span class="kw">for</span> <span class="vr">_</span> <span class="kw">in</span> <span class="fn">range</span>(<span class="vr">n</span>)])</td><td class="explain-cell">← list comprehension pattern</td></tr>
+              <tr><td class="ln">8</td><td class="code-line"><span class="fn">print</span>(<span class="nd">np</span>.<span class="fn">mean</span>(<span class="vr">samples</span>))</td><td class="explain-cell">← should ≈ 0.5</td></tr>
+              <tr><td class="ln">9</td><td class="code-line"></td><td class="explain-cell"></td></tr>
+              <tr><td class="ln">10</td><td class="code-line comment-line"># ── SCIPY EQUIVALENT ────────────────────────────</td><td class="explain-cell"></td></tr>
+              <tr><td class="ln">11</td><td class="code-line"><span class="vr">bernoulli</span>.<span class="fn">rvs</span>(<span class="nm">0.5</span>, size=<span class="nm">10</span>)</td><td class="explain-cell">← scipy shortcut for comparison</td></tr>
+            </table>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ════════════════════════════════════════ -->
+  <!-- SECTION 3: BINOMIAL -->
+  <!-- ════════════════════════════════════════ -->
+  <section class="section s3" id="s3">
+    <div class="section-header">
+      <span class="section-num">03</span>
+      <h2 class="section-title">Binomial Sampling</h2>
+    </div>
+
+    <div class="card s3">
+      <div class="card-header" onclick="toggle(this)">
+        <span class="card-dot"></span>
+        <span class="card-title">binomial_sample(n, p) — Sum of Bernoulli Trials</span>
+        <span class="card-tag">PMF</span>
+        <span class="chevron">▾</span>
+      </div>
+      <div class="card-body">
+        <div class="concept">
+          Binomial(n,p) = sum of n independent Bernoulli(p) trials.<br>
+          Key functions: <span class="pill pill-green">binom.rvs(n, p)</span> <span class="pill pill-blue">binom.pmf(k, n, p)</span> <span class="pill pill-yellow">np.var()</span> <span class="pill pill-purple">np.mean()</span>
+        </div>
+        <div class="lib-row">
+          <span class="lib-label">imports:</span>
+          <span class="lib-pill">from scipy.stats import binom</span>
+          <span class="lib-pill">import numpy as np</span>
+        </div>
+        <div class="code-wrap">
+          <div class="code-block">
+            <div class="code-toolbar"><span class="dot dot-r"></span><span class="dot dot-y"></span><span class="dot dot-g"></span><span class="code-lang">python</span></div>
+            <table class="code-table">
+              <tr><td class="ln">1</td><td class="code-line"><span class="kw">def</span> <span class="fn">binomial_sample</span>(<span class="vr">n</span>, <span class="vr">p</span>):</td><td class="explain-cell"></td></tr>
+              <tr><td class="ln">2</td><td class="code-line">    <span class="kw">return</span> <span class="fn">sum</span>(<span class="fn">bernoulli_sample</span>(<span class="vr">p</span>) <span class="kw">for</span> <span class="vr">_</span> <span class="kw">in</span> <span class="fn">range</span>(<span class="vr">n</span>))</td><td class="explain-cell">← sum n Bernoulli trials</td></tr>
+              <tr><td class="ln">3</td><td class="code-line"></td><td class="explain-cell"></td></tr>
+              <tr><td class="ln">4</td><td class="code-line comment-line"># ── THEORETICAL VALUES ──────────────────────────</td><td class="explain-cell"></td></tr>
+              <tr><td class="ln">5</td><td class="code-line"><span class="vr">n_trials</span>, <span class="vr">p</span> = <span class="nm">20</span>, <span class="nm">0.5</span></td><td class="explain-cell"></td></tr>
+              <tr><td class="ln">6</td><td class="code-line"><span class="vr">theoretical_mean</span> = <span class="vr">n_trials</span> * <span class="vr">p</span></td><td class="explain-cell">← E[X] = n·p</td></tr>
+              <tr><td class="ln">7</td><td class="code-line"><span class="vr">theoretical_var</span>  = <span class="vr">n_trials</span> * <span class="vr">p</span> * (<span class="nm">1</span>-<span class="vr">p</span>)</td><td class="explain-cell">← Var[X] = n·p·(1−p)</td></tr>
+              <tr><td class="ln">8</td><td class="code-line"></td><td class="explain-cell"></td></tr>
+              <tr><td class="ln">9</td><td class="code-line comment-line"># ── GENERATE AND VALIDATE ───────────────────────</td><td class="explain-cell"></td></tr>
+              <tr><td class="ln">10</td><td class="code-line"><span class="vr">samples</span> = <span class="nd">np</span>.<span class="fn">array</span>([<span class="fn">binomial_sample</span>(<span class="vr">n_trials</span>, <span class="vr">p</span>) <span class="kw">for</span> <span class="vr">_</span> <span class="kw">in</span> <span class="fn">range</span>(<span class="nm">10000</span>)])</td><td class="explain-cell"></td></tr>
+              <tr><td class="ln">11</td><td class="code-line"><span class="fn">print</span>(<span class="nd">np</span>.<span class="fn">mean</span>(<span class="vr">samples</span>), <span class="nd">np</span>.<span class="fn">var</span>(<span class="vr">samples</span>))</td><td class="explain-cell">← compare to theoretical</td></tr>
+              <tr><td class="ln">12</td><td class="code-line"></td><td class="explain-cell"></td></tr>
+              <tr><td class="ln">13</td><td class="code-line comment-line"># ── SCIPY SHORTCUT ──────────────────────────────</td><td class="explain-cell"></td></tr>
+              <tr><td class="ln">14</td><td class="code-line"><span class="vr">binom</span>.<span class="fn">rvs</span>(<span class="vr">n_trials</span>, <span class="vr">p</span>, size=<span class="nm">10000</span>)</td><td class="explain-cell">← generate samples directly</td></tr>
+              <tr><td class="ln">15</td><td class="code-line"><span class="vr">binom</span>.<span class="fn">pmf</span>(<span class="fn">range</span>(<span class="vr">n_trials</span>+<span class="nm">1</span>), <span class="vr">n_trials</span>, <span class="vr">p</span>)</td><td class="explain-cell">← theoretical PMF values for plot</td></tr>
+            </table>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ════════════════════════════════════════ -->
+  <!-- SECTION 4: CATEGORICAL -->
+  <!-- ════════════════════════════════════════ -->
+  <section class="section s4" id="s4">
+    <div class="section-header">
+      <span class="section-num">04</span>
+      <h2 class="section-title">Categorical Sampling</h2>
+      <span class="section-badge">EXAM LIKELY</span>
+    </div>
+
+    <div class="card s4">
+      <div class="card-header" onclick="toggle(this)">
+        <span class="card-dot"></span>
+        <span class="card-title">categorical_sample(*probs) — Partition [0,1] by CDF</span>
+        <span class="card-tag">K outcomes</span>
+        <span class="chevron">▾</span>
+      </div>
+      <div class="card-body">
+        <div class="concept">
+          <strong>Pattern:</strong> np.cumsum builds the CDF. U lands in interval k with probability = width of that interval = pk.<br>
+          Key functions: <span class="pill pill-green">np.cumsum(probs)</span> <span class="pill pill-blue">np.random.uniform(0,1)</span> <span class="pill pill-yellow">np.isclose()</span> <span class="pill pill-purple">np.random.choice()</span>
+        </div>
+        <div class="lib-row">
+          <span class="lib-label">key functions:</span>
+          <span class="lib-pill">np.cumsum()</span>
+          <span class="lib-pill">np.isclose()</span>
+          <span class="lib-pill">np.random.choice()</span>
+          <span class="lib-pill">multinomial.rvs()</span>
+        </div>
+        <div class="code-wrap">
+          <div class="code-block">
+            <div class="code-toolbar"><span class="dot dot-r"></span><span class="dot dot-y"></span><span class="dot dot-g"></span><span class="code-lang">python</span></div>
+            <table class="code-table">
+              <tr><td class="ln">1</td><td class="code-line"><span class="kw">def</span> <span class="fn">categorical_sample</span>(*<span class="vr">probs</span>):</td><td class="explain-cell">← *probs accepts any number of args</td></tr>
+              <tr><td class="ln">2</td><td class="code-line">    <span class="vr">probs</span>      = <span class="nd">np</span>.<span class="fn">array</span>(<span class="vr">probs</span>)</td><td class="explain-cell">← convert to numpy array</td></tr>
+              <tr><td class="ln">3</td><td class="code-line">    <span class="kw">assert</span> <span class="nd">np</span>.<span class="fn">isclose</span>(<span class="vr">probs</span>.<span class="fn">sum</span>(), <span class="nm">1.0</span>)</td><td class="explain-cell">← validate probs sum to 1</td></tr>
+              <tr><td class="ln">4</td><td class="code-line">    <span class="vr">cumulative</span> = <span class="nd">np</span>.<span class="fn">cumsum</span>(<span class="vr">probs</span>)</td><td class="explain-cell">← build CDF: [p1, p1+p2, ..., 1.0]</td></tr>
+              <tr><td class="ln">5</td><td class="code-line">    <span class="vr">u</span>          = <span class="nd">np</span>.<span class="fn">random</span>.<span class="fn">uniform</span>(<span class="nm">0</span>, <span class="nm">1</span>)</td><td class="explain-cell">← throw dart in [0,1]</td></tr>
+              <tr><td class="ln">6</td><td class="code-line">    <span class="kw">for</span> <span class="vr">i</span>, <span class="vr">cum_prob</span> <span class="kw">in</span> <span class="fn">enumerate</span>(<span class="vr">cumulative</span>):</td><td class="explain-cell">← check each interval</td></tr>
+              <tr><td class="ln">7</td><td class="code-line">        <span class="kw">if</span> <span class="vr">u</span> < <span class="vr">cum_prob</span>:</td><td class="explain-cell">← dart lands in this interval?</td></tr>
+              <tr><td class="ln">8</td><td class="code-line">            <span class="kw">return</span> <span class="vr">i</span> + <span class="nm">1</span></td><td class="explain-cell">← return category (1-indexed)</td></tr>
+              <tr><td class="ln">9</td><td class="code-line">    <span class="kw">return</span> <span class="fn">len</span>(<span class="vr">probs</span>)</td><td class="explain-cell">← fallback for floating point edge</td></tr>
+              <tr><td class="ln">10</td><td class="code-line"></td><td class="explain-cell"></td></tr>
+              <tr><td class="ln">11</td><td class="code-line comment-line"># ── USAGE EXAMPLES ──────────────────────────────</td><td class="explain-cell"></td></tr>
+              <tr><td class="ln">12</td><td class="code-line"><span class="fn">categorical_sample</span>(<span class="nm">1/6</span>, <span class="nm">1/6</span>, <span class="nm">1/6</span>, <span class="nm">1/6</span>, <span class="nm">1/6</span>, <span class="nm">1/6</span>)</td><td class="explain-cell">← fair die</td></tr>
+              <tr><td class="ln">13</td><td class="code-line"><span class="fn">categorical_sample</span>(<span class="nm">0.1</span>, <span class="nm">0.1</span>, <span class="nm">0.1</span>, <span class="nm">0.1</span>, <span class="nm">0.1</span>, <span class="nm">0.5</span>)</td><td class="explain-cell">← loaded die — face 6 is 5x more likely</td></tr>
+              <tr><td class="ln">14</td><td class="code-line"></td><td class="explain-cell"></td></tr>
+              <tr><td class="ln">15</td><td class="code-line comment-line"># ── NUMPY SHORTCUT ──────────────────────────────</td><td class="explain-cell"></td></tr>
+              <tr><td class="ln">16</td><td class="code-line"><span class="nd">np</span>.<span class="fn">random</span>.<span class="fn">choice</span>([<span class="nm">1</span>,<span class="nm">2</span>,<span class="nm">3</span>,<span class="nm">4</span>,<span class="nm">5</span>,<span class="nm">6</span>], size=<span class="nm">10</span>, p=[<span class="nm">1/6</span>]*<span class="nm">6</span>)</td><td class="explain-cell">← built-in categorical sampler</td></tr>
+              <tr><td class="ln">17</td><td class="code-line"></td><td class="explain-cell"></td></tr>
+              <tr><td class="ln">18</td><td class="code-line comment-line"># ── CATEGORICAL vs MULTINOMIAL ──────────────────</td><td class="explain-cell"></td></tr>
+              <tr><td class="ln">19</td><td class="code-line"><span class="vr">multinomial</span>.<span class="fn">rvs</span>(n=<span class="nm">1</span>,  p=[<span class="nm">1/6</span>]*<span class="nm">6</span>)</td><td class="explain-cell">← one-hot vector e.g. [0,0,1,0,0,0]</td></tr>
+              <tr><td class="ln">20</td><td class="code-line"><span class="vr">multinomial</span>.<span class="fn">rvs</span>(n=<span class="nm">10</span>, p=[<span class="nm">1/6</span>]*<span class="nm">6</span>)</td><td class="explain-cell">← count vector e.g. [2,1,3,0,2,2]</td></tr>
+              <tr><td class="ln">21</td><td class="code-line"><span class="nd">np</span>.<span class="fn">random</span>.<span class="fn">multinomial</span>(<span class="nm">10</span>, [<span class="nm">1/6</span>]*<span class="nm">6</span>)</td><td class="explain-cell">← numpy multinomial equivalent</td></tr>
+            </table>
+          </div>
+        </div>
+        <div class="warn">⚠ &nbsp; <span>Categorical = 1 trial → 1 outcome (e.g. "roll die once → 3"). Multinomial = n trials → count vector (e.g. "roll 10 times → [2,1,3,0,2,2]").</span></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ════════════════════════════════════════ -->
+  <!-- SECTION 5: MONTE CARLO PI -->
+  <!-- ════════════════════════════════════════ -->
+  <section class="section s1" id="s5">
+    <div class="section-header">
+      <span class="section-num">05</span>
+      <h2 class="section-title">Monte Carlo Integration — π Estimation</h2>
+    </div>
+
+    <div class="card s1">
+      <div class="card-header" onclick="toggle(this)">
+        <span class="card-dot"></span>
+        <span class="card-title">Monte Carlo: E[f(X)] ≈ (1/N) Σ f(xi)</span>
+        <span class="card-tag">integration</span>
+        <span class="chevron">▾</span>
+      </div>
+      <div class="card-body">
+        <div class="concept">
+          Estimate ∫ f(x)p(x)dx by sampling xi ~ p(x) and averaging f(xi). Works because samples naturally weight regions by their probability.<br>
+          Key functions: <span class="pill pill-green">np.random.rand(N)</span> <span class="pill pill-blue">np.sum(condition)</span>
+        </div>
+        <div class="lib-row">
+          <span class="lib-label">key pattern:</span>
+          <span class="lib-pill">np.random.rand(N)</span>
+          <span class="lib-pill">np.sum(x**2 + y**2 &lt; 1)</span>
+        </div>
+        <div class="code-wrap">
+          <div class="code-block">
+            <div class="code-toolbar"><span class="dot dot-r"></span><span class="dot dot-y"></span><span class="dot dot-g"></span><span class="code-lang">python</span></div>
+            <table class="code-table">
+              <tr><td class="ln">1</td><td class="code-line"><span class="vr">N</span> = <span class="nm">100_000</span></td><td class="explain-cell">← number of random darts</td></tr>
+              <tr><td class="ln">2</td><td class="code-line"></td><td class="explain-cell"></td></tr>
+              <tr><td class="ln">3</td><td class="code-line"><span class="vr">x_array</span> = <span class="nd">np</span>.<span class="fn">random</span>.<span class="fn">rand</span>(<span class="vr">N</span>)</td><td class="explain-cell">← N uniform x coords in [0,1)</td></tr>
+              <tr><td class="ln">4</td><td class="code-line"><span class="vr">y_array</span> = <span class="nd">np</span>.<span class="fn">random</span>.<span class="fn">rand</span>(<span class="vr">N</span>)</td><td class="explain-cell">← N uniform y coords in [0,1)</td></tr>
+              <tr><td class="ln">5</td><td class="code-line"></td><td class="explain-cell"></td></tr>
+              <tr><td class="ln">6</td><td class="code-line"><span class="vr">N_inside</span> = <span class="nd">np</span>.<span class="fn">sum</span>(<span class="vr">x_array</span>**<span class="nm">2</span> + <span class="vr">y_array</span>**<span class="nm">2</span> < <span class="nm">1</span>)</td><td class="explain-cell">← count darts inside quarter circle</td></tr>
+              <tr><td class="ln">7</td><td class="code-line"></td><td class="explain-cell">← x²+y²&lt;1 is True/False, sum counts True</td></tr>
+              <tr><td class="ln">8</td><td class="code-line"><span class="vr">pi_approx</span> = <span class="nm">4</span> * <span class="vr">N_inside</span> / <span class="vr">N</span></td><td class="explain-cell">← ratio ≈ π/4, multiply by 4</td></tr>
+              <tr><td class="ln">9</td><td class="code-line"><span class="fn">print</span>(<span class="vr">pi_approx</span>)</td><td class="explain-cell">← should ≈ 3.14159</td></tr>
+            </table>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ════════════════════════════════════════ -->
+  <!-- SECTION 6: REJECTION SAMPLING -->
+  <!-- ════════════════════════════════════════ -->
+  <section class="section s2" id="s6">
+    <div class="section-header">
+      <span class="section-num">06</span>
+      <h2 class="section-title">Rejection Sampling</h2>
+      <span class="section-badge">EXAM LIKELY</span>
+    </div>
+
+    <div class="card s2">
+      <div class="card-header" onclick="toggle(this)">
+        <span class="card-dot"></span>
+        <span class="card-title">rejection_sampling_beta(α, β, n) — No Closed-Form F⁻¹</span>
+        <span class="card-tag">Beta(2,5)</span>
+        <span class="chevron">▾</span>
+      </div>
+      <div class="card-body">
+        <div class="concept">
+          Use when: target p(x) has no F⁻¹, but you can EVALUATE p(x) at any x. Need M where M·q(x) ≥ p(x) everywhere.<br>
+          <strong>Acceptance rate = 1/M.</strong> Smaller M = more efficient = fewer wasted proposals.<br>
+          Key functions: <span class="pill pill-green">stats.beta.pdf(x, α, β)</span> <span class="pill pill-blue">np.linspace(0,1,10000)</span> <span class="pill pill-yellow">np.max()</span>
+        </div>
+        <div class="lib-row">
+          <span class="lib-label">key functions:</span>
+          <span class="lib-pill">stats.beta.pdf(x, a, b)</span>
+          <span class="lib-pill">np.linspace(0, 1, 10_000)</span>
+          <span class="lib-pill">np.max(arr)</span>
+        </div>
+        <div class="code-wrap">
+          <div class="code-block">
+            <div class="code-toolbar"><span class="dot dot-r"></span><span class="dot dot-y"></span><span class="dot dot-g"></span><span class="code-lang">python</span></div>
+            <table class="code-table">
+              <tr><td class="ln">1</td><td class="code-line"><span class="kw">def</span> <span class="fn">rejection_sampling_beta</span>(<span class="vr">alpha</span>, <span class="vr">beta</span>, <span class="vr">n_samples</span>):</td><td class="explain-cell"></td></tr>
+              <tr><td class="ln">2</td><td class="code-line"></td><td class="explain-cell"></td></tr>
+              <tr><td class="ln">3</td><td class="code-line">    <span class="kw">def</span> <span class="fn">target</span>(<span class="vr">x</span>):</td><td class="explain-cell"></td></tr>
+              <tr><td class="ln">4</td><td class="code-line">        <span class="kw">return</span> <span class="nd">stats</span>.<span class="fn">beta</span>.<span class="fn">pdf</span>(<span class="vr">x</span>, <span class="vr">alpha</span>, <span class="vr">beta</span>)</td><td class="explain-cell">← p(x): normalized Beta PDF</td></tr>
+              <tr><td class="ln">5</td><td class="code-line"></td><td class="explain-cell"></td></tr>
+              <tr><td class="ln">6</td><td class="code-line">    <span class="vr">x_grid</span> = <span class="nd">np</span>.<span class="fn">linspace</span>(<span class="nm">0</span>, <span class="nm">1</span>, <span class="nm">10_000</span>)</td><td class="explain-cell">← fine grid to find max of p(x)</td></tr>
+              <tr><td class="ln">7</td><td class="code-line">    <span class="vr">M</span> = <span class="nd">np</span>.<span class="fn">max</span>(<span class="fn">target</span>(<span class="vr">x_grid</span>))</td><td class="explain-cell">← M = ceiling: must cover p(x) everywhere</td></tr>
+              <tr><td class="ln">8</td><td class="code-line"></td><td class="explain-cell"></td></tr>
+              <tr><td class="ln">9</td><td class="code-line">    <span class="vr">samples</span>     = []</td><td class="explain-cell"></td></tr>
+              <tr><td class="ln">10</td><td class="code-line">    <span class="vr">n_proposals</span> = <span class="nm">0</span></td><td class="explain-cell">← track total proposals for acceptance rate</td></tr>
+              <tr><td class="ln">11</td><td class="code-line"></td><td class="explain-cell"></td></tr>
+              <tr><td class="ln">12</td><td class="code-line">    <span class="kw">while</span> <span class="fn">len</span>(<span class="vr">samples</span>) < <span class="vr">n_samples</span>:</td><td class="explain-cell">← keep going until n valid samples</td></tr>
+              <tr><td class="ln">13</td><td class="code-line">        <span class="vr">x</span> = <span class="nd">np</span>.<span class="fn">random</span>.<span class="fn">uniform</span>(<span class="nm">0</span>, <span class="nm">1</span>)</td><td class="explain-cell">← STEP 1: candidate from q(x)=Uniform</td></tr>
+              <tr><td class="ln">14</td><td class="code-line">        <span class="vr">u</span> = <span class="nd">np</span>.<span class="fn">random</span>.<span class="fn">uniform</span>(<span class="nm">0</span>, <span class="nm">1</span>)</td><td class="explain-cell">← STEP 2: dart height</td></tr>
+              <tr><td class="ln">15</td><td class="code-line">        <span class="vr">n_proposals</span> += <span class="nm">1</span></td><td class="explain-cell"></td></tr>
+              <tr><td class="ln">16</td><td class="code-line"></td><td class="explain-cell"></td></tr>
+              <tr><td class="ln">17</td><td class="code-line">        <span class="kw">if</span> <span class="vr">u</span> <= <span class="fn">target</span>(<span class="vr">x</span>) / <span class="vr">M</span>:</td><td class="explain-cell">← STEP 3: accept? (q=1, so M·q=M)</td></tr>
+              <tr><td class="ln">18</td><td class="code-line">            <span class="vr">samples</span>.<span class="fn">append</span>(<span class="vr">x</span>)</td><td class="explain-cell">← ACCEPT → add to results</td></tr>
+              <tr><td class="ln">19</td><td class="code-line">        <span class="cm"># else: REJECT → loop again, no action</span></td><td class="explain-cell"></td></tr>
+              <tr><td class="ln">20</td><td class="code-line"></td><td class="explain-cell"></td></tr>
+              <tr><td class="ln">21</td><td class="code-line">    <span class="vr">acc_rate</span> = <span class="vr">n_samples</span> / <span class="vr">n_proposals</span></td><td class="explain-cell">← empirical acceptance rate ≈ 1/M</td></tr>
+              <tr><td class="ln">22</td><td class="code-line">    <span class="kw">return</span> <span class="nd">np</span>.<span class="fn">array</span>(<span class="vr">samples</span>)</td><td class="explain-cell"></td></tr>
+            </table>
+          </div>
+        </div>
+        <div class="warn">⚠ &nbsp;<span>u &lt;= target(x) / M — NOT target(x) / (M·q(x)). Since q(x) = Uniform = 1, the q cancels out. If you use a different proposal, you must divide by q(x) too.</span></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ════════════════════════════════════════ -->
+  <!-- SECTION 7: IMPORTANCE SAMPLING -->
+  <!-- ════════════════════════════════════════ -->
+  <section class="section s3" id="s7">
+    <div class="section-header">
+      <span class="section-num">07</span>
+      <h2 class="section-title">Importance Sampling</h2>
+      <span class="section-badge">EXAM LIKELY</span>
+    </div>
+
+    <div class="card s3">
+      <div class="card-header" onclick="toggle(this)">
+        <span class="card-dot"></span>
+        <span class="card-title">IS Estimator — E[f(X)] for Rare Events</span>
+        <span class="card-tag">NOT sampling</span>
+        <span class="chevron">▾</span>
+      </div>
+      <div class="card-body">
+        <div class="concept">
+          <strong>NOT for generating samples.</strong> For estimating E[f(X)] under p(x) when p(x) is tiny where f(x) matters.<br>
+          Sample from q(x) instead, correct with weights w(x) = p(x)/q(x).<br>
+          Key functions: <span class="pill pill-green">stats.norm(μ,σ).pdf(x)</span> <span class="pill pill-blue">np.random.normal(μ,σ,N)</span> <span class="pill pill-yellow">np.mean()</span> <span class="pill pill-red">np.var()</span>
+        </div>
+        <div class="lib-row">
+          <span class="lib-label">key functions:</span>
+          <span class="lib-pill">stats.norm(0,1).pdf(x)</span>
+          <span class="lib-pill">stats.norm.cdf(1.96)</span>
+          <span class="lib-pill">np.random.normal(3,1,N)</span>
+          <span class="lib-pill">np.var()</span>
+        </div>
+        <div class="code-wrap">
+          <div class="code-block">
+            <div class="code-toolbar"><span class="dot dot-r"></span><span class="dot dot-y"></span><span class="dot dot-g"></span><span class="code-lang">python</span></div>
+            <table class="code-table">
+              <tr><td class="ln">1</td><td class="code-line comment-line"># Goal: estimate P(X > 1.96) where X ~ N(0,1) ≈ 0.025</td><td class="explain-cell"></td></tr>
+              <tr><td class="ln">2</td><td class="code-line"><span class="vr">N</span>         = <span class="nm">1_000_000</span></td><td class="explain-cell"></td></tr>
+              <tr><td class="ln">3</td><td class="code-line"><span class="vr">true_prob</span> = <span class="nm">1</span> - <span class="nd">stats</span>.<span class="fn">norm</span>.<span class="fn">cdf</span>(<span class="nm">1.96</span>)</td><td class="explain-cell">← ground truth for comparison</td></tr>
+              <tr><td class="ln">4</td><td class="code-line"></td><td class="explain-cell"></td></tr>
+              <tr><td class="ln">5</td><td class="code-line comment-line"># ── STANDARD MONTE CARLO (HIGH VARIANCE) ────────</td><td class="explain-cell"></td></tr>
+              <tr><td class="ln">6</td><td class="code-line"><span class="vr">f</span>          = <span class="kw">lambda</span> <span class="vr">x</span>: <span class="vr">x</span> > <span class="nm">1.96</span></td><td class="explain-cell">← indicator: 1 if x>1.96, else 0</td></tr>
+              <tr><td class="ln">7</td><td class="code-line"><span class="vr">samples_p</span>  = <span class="nd">np</span>.<span class="fn">random</span>.<span class="fn">normal</span>(<span class="nm">0</span>, <span class="nm">1</span>, <span class="vr">N</span>)</td><td class="explain-cell">← draw from TARGET p(x)=N(0,1)</td></tr>
+              <tr><td class="ln">8</td><td class="code-line"><span class="vr">mean_mc</span>    = <span class="nd">np</span>.<span class="fn">mean</span>(<span class="fn">f</span>(<span class="vr">samples_p</span>))</td><td class="explain-cell">← avg of indicator = P(X>1.96)</td></tr>
+              <tr><td class="ln">9</td><td class="code-line"><span class="vr">var_mc</span>     = <span class="nd">np</span>.<span class="fn">var</span>(<span class="fn">f</span>(<span class="vr">samples_p</span>))</td><td class="explain-cell">← high! only ~2.5% hits are useful</td></tr>
+              <tr><td class="ln">10</td><td class="code-line"></td><td class="explain-cell"></td></tr>
+              <tr><td class="ln">11</td><td class="code-line comment-line"># ── IMPORTANCE SAMPLING (LOW VARIANCE) ──────────</td><td class="explain-cell"></td></tr>
+              <tr><td class="ln">12</td><td class="code-line"><span class="vr">p_pdf</span>      = <span class="kw">lambda</span> <span class="vr">x</span>: <span class="nd">stats</span>.<span class="fn">norm</span>(<span class="nm">0</span>, <span class="nm">1</span>).<span class="fn">pdf</span>(<span class="vr">x</span>)</td><td class="explain-cell">← target p(x)</td></tr>
+              <tr><td class="ln">13</td><td class="code-line"><span class="vr">q_pdf</span>      = <span class="kw">lambda</span> <span class="vr">x</span>: <span class="nd">stats</span>.<span class="fn">norm</span>(<span class="nm">3</span>, <span class="nm">1</span>).<span class="fn">pdf</span>(<span class="vr">x</span>)</td><td class="explain-cell">← proposal q(x) shifted to rare region</td></tr>
+              <tr><td class="ln">14</td><td class="code-line"></td><td class="explain-cell"></td></tr>
+              <tr><td class="ln">15</td><td class="code-line"><span class="vr">samples_q</span>  = <span class="nd">np</span>.<span class="fn">random</span>.<span class="fn">normal</span>(<span class="nm">3</span>, <span class="nm">1</span>, <span class="vr">N</span>)</td><td class="explain-cell">← STEP 1: sample from q NOT p</td></tr>
+              <tr><td class="ln">16</td><td class="code-line"><span class="vr">weights</span>    = <span class="fn">p_pdf</span>(<span class="vr">samples_q</span>) / <span class="fn">q_pdf</span>(<span class="vr">samples_q</span>)</td><td class="explain-cell">← STEP 2: w(x) = p(x)/q(x)</td></tr>
+              <tr><td class="ln">17</td><td class="code-line"><span class="vr">values_is</span>  = <span class="fn">f</span>(<span class="vr">samples_q</span>) * <span class="vr">weights</span></td><td class="explain-cell">← STEP 3: weight each f(x)</td></tr>
+              <tr><td class="ln">18</td><td class="code-line"><span class="vr">mean_is</span>    = <span class="nd">np</span>.<span class="fn">mean</span>(<span class="vr">values_is</span>)</td><td class="explain-cell">← STEP 4: average = IS estimate</td></tr>
+              <tr><td class="ln">19</td><td class="code-line"><span class="vr">var_is</span>     = <span class="nd">np</span>.<span class="fn">var</span>(<span class="vr">values_is</span>)</td><td class="explain-cell">← much lower than var_mc!</td></tr>
+              <tr><td class="ln">20</td><td class="code-line"></td><td class="explain-cell"></td></tr>
+              <tr><td class="ln">21</td><td class="code-line comment-line"># ── VARIANCE REDUCTION ──────────────────────────</td><td class="explain-cell"></td></tr>
+              <tr><td class="ln">22</td><td class="code-line"><span class="vr">reduction</span> = <span class="vr">var_mc</span> / <span class="vr">var_is</span></td><td class="explain-cell">← how many × smaller IS variance is</td></tr>
+              <tr><td class="ln">23</td><td class="code-line"><span class="fn">print</span>(<span class="fn">f</span><span class="st">"Variance reduction: {reduction:.1f}x"</span>)</td><td class="explain-cell">← typically ~100x for this example</td></tr>
+            </table>
+          </div>
+        </div>
+        <div class="warn">⚠ &nbsp;<span>IS is for EXPECTATIONS only, not for generating samples. Choosing q centered in the rare region (e.g. N(3,1) for P(X>1.96)) gives massive variance reduction.</span></div>
+      </div>
+    </div>
+
+    <!-- QUICK REF CARD -->
+    <div class="card s3">
+      <div class="card-header" onclick="toggle(this)">
+        <span class="card-dot"></span>
+        <span class="card-title">Decision Tree — Which Method?</span>
+        <span class="card-tag">cheatsheet</span>
+        <span class="chevron">▾</span>
+      </div>
+      <div class="card-body">
+        <div class="code-wrap" style="padding-top:16px">
+          <div class="code-block">
+            <div class="code-toolbar"><span class="dot dot-r"></span><span class="dot dot-y"></span><span class="dot dot-g"></span><span class="code-lang">decision tree</span></div>
+            <table class="code-table">
+              <tr><td class="ln"> </td><td class="code-line">Need to <span class="fn">SAMPLE</span> from p(x)?</td><td class="explain-cell"></td></tr>
+              <tr><td class="ln"> </td><td class="code-line">│</td><td class="explain-cell"></td></tr>
+              <tr><td class="ln"> </td><td class="code-line">├── F⁻¹ exists in closed form?</td><td class="explain-cell"></td></tr>
+              <tr><td class="ln"> </td><td class="code-line">│   └── <span class="st">YES</span> ──► <span class="fn">Inverse Transform</span></td><td class="explain-cell">← Exponential, f(x)=2x, Bernoulli, Categorical</td></tr>
+              <tr><td class="ln"> </td><td class="code-line">│   └── <span class="kw">NO</span>  ──► continue...</td><td class="explain-cell"></td></tr>
+              <tr><td class="ln"> </td><td class="code-line">│</td><td class="explain-cell"></td></tr>
+              <tr><td class="ln"> </td><td class="code-line">├── Just need <span class="fn">E[f(X)]</span> or <span class="fn">P(rare event)</span>?</td><td class="explain-cell"></td></tr>
+              <tr><td class="ln"> </td><td class="code-line">│   └── <span class="st">YES</span> ──► <span class="fn">Importance Sampling</span></td><td class="explain-cell">← P(X>1.96), tail probs, rare events</td></tr>
+              <tr><td class="ln"> </td><td class="code-line">│   └── <span class="kw">NO</span>  ──► continue...</td><td class="explain-cell"></td></tr>
+              <tr><td class="ln"> </td><td class="code-line">│</td><td class="explain-cell"></td></tr>
+              <tr><td class="ln"> </td><td class="code-line">├── Can eval p(x) + find good q + small M?</td><td class="explain-cell"></td></tr>
+              <tr><td class="ln"> </td><td class="code-line">│   └── <span class="st">YES</span> ──► <span class="fn">Rejection Sampling</span></td><td class="explain-cell">← Beta, Gamma with Uniform proposal</td></tr>
+              <tr><td class="ln"> </td><td class="code-line">│   └── <span class="kw">NO</span>  ──► <span class="nd">MCMC</span></td><td class="explain-cell">← complex Bayesian posteriors</td></tr>
+            </table>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <footer>PROBABILISTIC MODELING &amp; SAMPLING · EXAM CHEATSHEET · 2026</footer>
+</div>
+
+<script>
+  function toggle(header) {
+    header.parentElement.classList.toggle('collapsed');
+  }
+</script>
+</body>
+</html>

@@ -1,0 +1,653 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Bayesian Inference — Coding Cheatsheet</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Mono:ital,wght@0,300;0,400;0,500;1,300&family=Syne:wght@400;600;700;800&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #0b0e14;
+    --surface: #131720;
+    --surface2: #1a2030;
+    --border: #252d3d;
+    --accent: #5b8fff;
+    --accent2: #ff6b6b;
+    --accent3: #4ecdc4;
+    --accent4: #ffd93d;
+    --text: #e2e8f0;
+    --muted: #6b7a99;
+    --code-bg: #0d1117;
+    --comment: #4a5568;
+    --keyword: #ff79c6;
+    --func: #8be9fd;
+    --string: #f1fa8c;
+    --number: #bd93f9;
+    --op: #ff6b6b;
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'Syne', sans-serif;
+    min-height: 100vh;
+    padding: 0 0 80px;
+  }
+
+  /* HEADER */
+  .header {
+    padding: 60px 48px 40px;
+    border-bottom: 1px solid var(--border);
+    position: relative;
+    overflow: hidden;
+  }
+  .header::before {
+    content: '';
+    position: absolute;
+    top: -100px; left: -100px;
+    width: 400px; height: 400px;
+    background: radial-gradient(circle, rgba(91,143,255,0.08) 0%, transparent 70%);
+    pointer-events: none;
+  }
+  .header-label {
+    font-size: 11px;
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    color: var(--accent);
+    margin-bottom: 12px;
+  }
+  .header h1 {
+    font-size: clamp(28px, 4vw, 48px);
+    font-weight: 800;
+    line-height: 1.1;
+    color: #fff;
+  }
+  .header h1 span { color: var(--accent); }
+  .header-sub {
+    margin-top: 14px;
+    color: var(--muted);
+    font-size: 14px;
+    font-family: 'DM Mono', monospace;
+    font-weight: 300;
+  }
+
+  /* NAV PILLS */
+  .nav {
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
+    padding: 24px 48px;
+    border-bottom: 1px solid var(--border);
+  }
+  .nav-pill {
+    padding: 6px 16px;
+    border-radius: 100px;
+    border: 1px solid var(--border);
+    font-size: 12px;
+    font-family: 'DM Mono', monospace;
+    cursor: pointer;
+    transition: all 0.2s;
+    color: var(--muted);
+    background: transparent;
+  }
+  .nav-pill:hover, .nav-pill.active {
+    border-color: var(--accent);
+    color: var(--accent);
+    background: rgba(91,143,255,0.08);
+  }
+
+  /* MAIN LAYOUT */
+  .container { padding: 40px 48px; max-width: 1400px; }
+
+  /* SECTION */
+  .section {
+    margin-bottom: 56px;
+    display: none;
+  }
+  .section.visible { display: block; }
+
+  .section-header {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    margin-bottom: 28px;
+  }
+  .section-num {
+    width: 36px; height: 36px;
+    border-radius: 8px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 13px;
+    font-weight: 700;
+    font-family: 'DM Mono', monospace;
+    flex-shrink: 0;
+  }
+  .section-title {
+    font-size: 20px;
+    font-weight: 700;
+    color: #fff;
+  }
+  .section-desc {
+    font-size: 13px;
+    color: var(--muted);
+    margin-top: 3px;
+    font-family: 'DM Mono', monospace;
+    font-weight: 300;
+  }
+
+  /* CARDS GRID */
+  .cards { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+  @media (max-width: 900px) { .cards { grid-template-columns: 1fr; } }
+  .card-full { grid-column: 1 / -1; }
+
+  /* CARD */
+  .card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    overflow: hidden;
+  }
+  .card-head {
+    padding: 14px 20px;
+    border-bottom: 1px solid var(--border);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+  }
+  .card-title {
+    font-size: 13px;
+    font-weight: 600;
+    color: #fff;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  .card-tag {
+    font-size: 10px;
+    font-family: 'DM Mono', monospace;
+    padding: 3px 8px;
+    border-radius: 4px;
+    font-weight: 400;
+    letter-spacing: 0.05em;
+  }
+  .tag-numpy { background: rgba(78,205,196,0.12); color: var(--accent3); }
+  .tag-matplotlib { background: rgba(255,107,107,0.12); color: var(--accent2); }
+  .tag-algo { background: rgba(91,143,255,0.12); color: var(--accent); }
+  .tag-pattern { background: rgba(255,217,61,0.12); color: var(--accent4); }
+
+  /* WHAT IT DOES summary */
+  .card-summary {
+    padding: 12px 20px;
+    background: var(--surface2);
+    border-bottom: 1px solid var(--border);
+    font-size: 12px;
+    color: var(--muted);
+    font-family: 'DM Mono', monospace;
+    font-style: italic;
+  }
+
+  /* CODE BLOCK */
+  .code-block {
+    position: relative;
+    background: var(--code-bg);
+  }
+  .code-block pre {
+    padding: 20px;
+    overflow-x: auto;
+    font-family: 'DM Mono', monospace;
+    font-size: 12.5px;
+    line-height: 1.9;
+  }
+
+  /* Syntax tokens */
+  .kw   { color: var(--keyword); }
+  .fn   { color: var(--func); }
+  .st   { color: var(--string); }
+  .nm   { color: var(--number); }
+  .cm   { color: var(--comment); font-style: italic; }
+  .op   { color: var(--op); }
+  .var  { color: #cdd6f4; }
+  .lib  { color: var(--accent3); }
+  .ann  { color: var(--accent4); font-weight: 500; }
+
+  /* ANNOTATION LINES */
+  .annotation {
+    display: flex;
+    align-items: flex-start;
+    gap: 10px;
+    padding: 0 20px 0 20px;
+    margin: 0;
+    font-size: 11.5px;
+    font-family: 'DM Mono', monospace;
+    color: #8892a8;
+    border-left: 2px solid transparent;
+    transition: border-color 0.15s;
+    line-height: 1.6;
+  }
+  .annotation .line-num {
+    color: var(--border);
+    min-width: 18px;
+    text-align: right;
+    font-size: 10px;
+    padding-top: 1px;
+  }
+  .annotation .arrow { color: var(--accent4); flex-shrink: 0; }
+
+  .annotations-wrap {
+    padding: 14px 0 16px;
+    border-top: 1px solid var(--border);
+    display: flex;
+    flex-direction: column;
+    gap: 5px;
+  }
+
+  /* FORMULA PILL */
+  .formula {
+    margin: 12px 20px;
+    padding: 10px 16px;
+    background: rgba(91,143,255,0.06);
+    border: 1px solid rgba(91,143,255,0.2);
+    border-radius: 8px;
+    font-family: 'DM Mono', monospace;
+    font-size: 12px;
+    color: var(--accent);
+    line-height: 1.6;
+  }
+  .formula .label { color: var(--muted); font-size: 10px; display: block; margin-bottom: 4px; letter-spacing: 0.1em; text-transform: uppercase; }
+
+  /* QUICK REF TABLE */
+  .ref-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-family: 'DM Mono', monospace;
+    font-size: 12px;
+  }
+  .ref-table th {
+    text-align: left;
+    padding: 10px 20px;
+    background: var(--surface2);
+    color: var(--muted);
+    font-size: 10px;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    border-bottom: 1px solid var(--border);
+  }
+  .ref-table td {
+    padding: 10px 20px;
+    border-bottom: 1px solid rgba(37,45,61,0.5);
+    vertical-align: top;
+    line-height: 1.6;
+  }
+  .ref-table tr:last-child td { border-bottom: none; }
+  .ref-table .fn-name { color: var(--func); }
+  .ref-table .fn-desc { color: var(--muted); }
+  .ref-table .fn-ex   { color: var(--string); }
+
+  /* SEPARATOR */
+  .sep { height: 1px; background: var(--border); margin: 40px 0; }
+
+  /* COPY BTN */
+  .copy-btn {
+    position: absolute;
+    top: 10px; right: 10px;
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    color: var(--muted);
+    font-size: 10px;
+    font-family: 'DM Mono', monospace;
+    padding: 4px 10px;
+    border-radius: 4px;
+    cursor: pointer;
+    transition: all 0.2s;
+    letter-spacing: 0.05em;
+  }
+  .copy-btn:hover { color: var(--accent); border-color: var(--accent); }
+
+  /* SCROLL TO TOP */
+  .back-top {
+    position: fixed;
+    bottom: 28px; right: 28px;
+    background: var(--accent);
+    color: #fff;
+    border: none;
+    border-radius: 50%;
+    width: 40px; height: 40px;
+    font-size: 18px;
+    cursor: pointer;
+    display: flex; align-items: center; justify-content: center;
+    opacity: 0.85;
+    transition: opacity 0.2s;
+  }
+  .back-top:hover { opacity: 1; }
+</style>
+</head>
+<body>
+
+<div class="header">
+  <div class="header-label">📓 Bayesian Inference</div>
+  <h1>Coding <span>Cheat Sheet</span></h1>
+  <div class="header-sub">numpy · matplotlib · 4 algorithms · line-by-line</div>
+</div>
+
+<div class="nav" id="nav">
+  <button class="nav-pill active" onclick="show('all', this)">All</button>
+  <button class="nav-pill" onclick="show('s1', this)">1 · Bayes Numerics</button>
+  <button class="nav-pill" onclick="show('s2', this)">2 · Conjugate Updating</button>
+  <button class="nav-pill" onclick="show('s3', this)">3 · MAP Estimation</button>
+  <button class="nav-pill" onclick="show('s4', this)">4 · Non-Conjugate Prior</button>
+  <button class="nav-pill" onclick="show('s5', this)">5 · Quick Reference</button>
+</div>
+
+<div class="container">
+
+<!-- ═══════════════════════════════════════════════
+     SECTION 1: BAYES NUMERICS
+════════════════════════════════════════════════ -->
+<div class="section visible" id="s1">
+  <div class="section-header">
+    <div class="section-num" style="background:rgba(91,143,255,0.15);color:var(--accent)">01</div>
+    <div>
+      <div class="section-title">Numerical Bayes — The Denominator Problem</div>
+      <div class="section-desc">posterior = (likelihood × prior) / evidence</div>
+    </div>
+  </div>
+  <div class="cards">
+    <div class="card card-full">
+      <div class="card-head">
+        <div class="card-title">Full pipeline: grid → likelihood → normalize → plot</div>
+        <span class="card-tag tag-algo">core algorithm</span>
+      </div>
+      <div class="card-summary">📌 Compute the posterior numerically by multiplying likelihood × prior, then dividing by the area under the curve.</div>
+      <div class="formula">
+        <span class="label">formula</span>
+        posterior(θ) = [ θˢ · (1−θ)ᶠ · prior(θ) ] / ∫ θˢ · (1−θ)ᶠ · prior(θ) dθ
+      </div>
+      <div class="code-block">
+        <button class="copy-btn" onclick="copyCode(this)">copy</button>
+        <pre><span class="kw">import</span> <span class="lib">numpy</span> <span class="kw">as</span> <span class="lib">np</span>
+<span class="kw">import</span> <span class="lib">matplotlib.pyplot</span> <span class="kw">as</span> <span class="lib">plt</span>
+
+<span class="var">theta</span> = <span class="lib">np</span>.<span class="fn">linspace</span>(<span class="nm">0</span>, <span class="nm">1</span>, <span class="nm">500</span>)          <span class="cm"># 500 evenly spaced θ values</span>
+
+<span class="var">successes</span> = <span class="nm">7</span>
+<span class="var">failures</span>  = <span class="nm">3</span>
+
+<span class="var">likelihood</span> = <span class="var">theta</span><span class="op">**</span><span class="var">successes</span> <span class="op">*</span> (<span class="nm">1</span> <span class="op">-</span> <span class="var">theta</span>)<span class="op">**</span><span class="var">failures</span>  <span class="cm"># P(data|θ)</span>
+
+<span class="var">prior</span> = <span class="lib">np</span>.<span class="fn">ones_like</span>(<span class="var">theta</span>)                    <span class="cm"># Uniform: P(θ) = 1 everywhere</span>
+
+<span class="var">unnormalized_posterior</span> = <span class="var">likelihood</span> <span class="op">*</span> <span class="var">prior</span>      <span class="cm"># numerator of Bayes</span>
+
+<span class="var">evidence</span> = <span class="lib">np</span>.<span class="fn">trapezoid</span>(<span class="var">unnormalized_posterior</span>, <span class="var">theta</span>)  <span class="cm"># ∫ = normalizing constant</span>
+
+<span class="var">posterior</span> = <span class="var">unnormalized_posterior</span> <span class="op">/</span> <span class="var">evidence</span>   <span class="cm"># divide → sums to 1</span>
+
+<span class="lib">plt</span>.<span class="fn">plot</span>(<span class="var">theta</span>, <span class="var">prior</span>, <span class="var">label</span>=<span class="st">"Prior"</span>)
+<span class="lib">plt</span>.<span class="fn">plot</span>(<span class="var">theta</span>, <span class="var">likelihood</span> <span class="op">/</span> <span class="var">likelihood</span>.<span class="fn">max</span>(), <span class="var">label</span>=<span class="st">"Likelihood (scaled)"</span>)
+<span class="lib">plt</span>.<span class="fn">plot</span>(<span class="var">theta</span>, <span class="var">posterior</span>, <span class="var">label</span>=<span class="st">"Posterior"</span>)
+<span class="lib">plt</span>.<span class="fn">legend</span>()
+<span class="lib">plt</span>.<span class="fn">show</span>()</pre>
+      </div>
+      <div class="annotations-wrap">
+        <div class="annotation"><span class="arrow">→</span><b style="color:#cdd6f4;margin-right:6px">np.linspace(0,1,500)</b>creates a grid of 500 θ values between 0 and 1. This is our "parameter space."</div>
+        <div class="annotation"><span class="arrow">→</span><b style="color:#cdd6f4;margin-right:6px">theta**s * (1-theta)**f</b>Bernoulli likelihood — probability of seeing s successes and f failures given θ.</div>
+        <div class="annotation"><span class="arrow">→</span><b style="color:#cdd6f4;margin-right:6px">np.ones_like(theta)</b>uniform prior — every θ equally likely before seeing data.</div>
+        <div class="annotation"><span class="arrow">→</span><b style="color:#cdd6f4;margin-right:6px">np.trapezoid(y, x)</b>numerical integration (trapezoid rule) — computes the "area under the curve." This IS the evidence / normalizing constant.</div>
+        <div class="annotation"><span class="arrow">→</span><b style="color:#cdd6f4;margin-right:6px">/ evidence</b>divides by the total area so the posterior sums to 1 (valid probability distribution).</div>
+        <div class="annotation"><span class="arrow">→</span><b style="color:#cdd6f4;margin-right:6px">likelihood / likelihood.max()</b>scales likelihood to [0,1] for visual comparison only — doesn't affect posterior math.</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════════
+     SECTION 2: CONJUGATE UPDATING
+════════════════════════════════════════════════ -->
+<div class="section visible" id="s2">
+  <div class="section-header">
+    <div class="section-num" style="background:rgba(78,205,196,0.15);color:var(--accent3)">02</div>
+    <div>
+      <div class="section-title">Beta-Bernoulli Conjugate Updating</div>
+      <div class="section-desc">closed-form posterior via parameter counting</div>
+    </div>
+  </div>
+  <div class="cards">
+    <div class="card card-full">
+      <div class="card-head">
+        <div class="card-title">Custom beta_pdf + sequential update loop</div>
+        <span class="card-tag tag-algo">conjugate algorithm</span>
+      </div>
+      <div class="card-summary">📌 Beta prior + Bernoulli data → Beta posterior. Update rule: α += successes, β += failures.</div>
+      <div class="formula">
+        <span class="label">update rule</span>
+        Beta(α, β)  +  data  →  Beta(α + Σxᵢ,  β + Σ(1−xᵢ))
+        <br>posterior mean = α / (α + β)
+      </div>
+      <div class="code-block">
+        <button class="copy-btn" onclick="copyCode(this)">copy</button>
+        <pre><span class="var">theta</span> = <span class="lib">np</span>.<span class="fn">linspace</span>(<span class="nm">0.001</span>, <span class="nm">0.999</span>, <span class="nm">500</span>)   <span class="cm"># avoid log(0) at endpoints</span>
+
+<span class="kw">def</span> <span class="fn">beta_pdf_numeric</span>(<span class="var">theta</span>, <span class="var">a</span>, <span class="var">b</span>):
+    <span class="var">unnormalized</span> = <span class="var">theta</span><span class="op">**</span>(<span class="var">a</span><span class="op">-</span><span class="nm">1</span>) <span class="op">*</span> (<span class="nm">1</span><span class="op">-</span><span class="var">theta</span>)<span class="op">**</span>(<span class="var">b</span><span class="op">-</span><span class="nm">1</span>)    <span class="cm"># Beta kernel</span>
+    <span class="var">Z</span> = <span class="lib">np</span>.<span class="fn">trapezoid</span>(<span class="var">unnormalized</span>, <span class="var">theta</span>)           <span class="cm"># normalizing constant</span>
+    <span class="kw">return</span> <span class="var">unnormalized</span> <span class="op">/</span> <span class="var">Z</span>
+
+<span class="var">a</span>, <span class="var">b</span> = <span class="nm">1</span>, <span class="nm">1</span>                              <span class="cm"># start: Beta(1,1) = uniform prior</span>
+<span class="var">data</span> = [<span class="nm">1</span>,<span class="nm">1</span>,<span class="nm">1</span>,<span class="nm">0</span>,<span class="nm">1</span>,<span class="nm">0</span>,<span class="nm">1</span>,<span class="nm">1</span>,<span class="nm">1</span>,<span class="nm">1</span>]             <span class="cm"># 1=success, 0=failure</span>
+
+<span class="kw">for</span> <span class="var">x</span> <span class="kw">in</span> <span class="var">data</span>:
+    <span class="var">a</span> <span class="op">+=</span> <span class="var">x</span>                               <span class="cm"># success → increment α</span>
+    <span class="var">b</span> <span class="op">+=</span> (<span class="nm">1</span><span class="op">-</span><span class="var">x</span>)                            <span class="cm"># failure → increment β</span>
+
+<span class="cm"># posterior is now Beta(9, 3)</span>
+<span class="cm"># posterior mean = 9/(9+3) = 0.75</span></pre>
+      </div>
+      <div class="annotations-wrap">
+        <div class="annotation"><span class="arrow">→</span><b style="color:#cdd6f4;margin-right:6px">0.001 to 0.999</b>slightly inset from 0/1 to prevent θ⁰⁻¹ = θ⁻¹ (division by zero for a=1 or b=1 edge cases).</div>
+        <div class="annotation"><span class="arrow">→</span><b style="color:#cdd6f4;margin-right:6px">theta**(a-1) * (1-theta)**(b-1)</b>the "kernel" of the Beta distribution — the shape without the normalizing constant B(a,b).</div>
+        <div class="annotation"><span class="arrow">→</span><b style="color:#cdd6f4;margin-right:6px">a, b = 1, 1</b>Beta(1,1) = Uniform(0,1). Think of it as: 1 phantom success + 1 phantom failure seen before any data.</div>
+        <div class="annotation"><span class="arrow">→</span><b style="color:#cdd6f4;margin-right:6px">for x in data: a += x</b>each 1 (success) adds to α. Each 0 (failure) adds to β via (1-x). This IS the closed-form Bayesian update.</div>
+        <div class="annotation"><span class="arrow">→</span><b style="color:#cdd6f4;margin-right:6px">Result: Beta(9,3)</b>posterior mean = 9/12 = 0.75. Prior was 1/2. Data pulled belief upward (8 successes, 2 failures).</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════════
+     SECTION 3: MAP ESTIMATION
+════════════════════════════════════════════════ -->
+<div class="section visible" id="s3">
+  <div class="section-header">
+    <div class="section-num" style="background:rgba(255,107,107,0.15);color:var(--accent2)">03</div>
+    <div>
+      <div class="section-title">MAP Estimation — Regularized Optimization</div>
+      <div class="section-desc">MAP = argmax(log-likelihood + log-prior)</div>
+    </div>
+  </div>
+  <div class="cards">
+    <div class="card card-full">
+      <div class="card-head">
+        <div class="card-title">Log-space MAP with argmax + axvline</div>
+        <span class="card-tag tag-algo">MAP algorithm</span>
+      </div>
+      <div class="card-summary">📌 Add log-prior to log-likelihood → MAP is regularized MLE. Beta(2,2) prior shrinks estimate toward 0.5.</div>
+      <div class="formula">
+        <span class="label">key identity</span>
+        MAP = argmax_θ [ log P(data|θ) + log P(θ) ]
+        <br>Gaussian prior P(θ) → Ridge (L²) penalty
+        <br>Laplace prior P(θ)  → Lasso (L¹) penalty
+      </div>
+      <div class="code-block">
+        <button class="copy-btn" onclick="copyCode(this)">copy</button>
+        <pre><span class="var">successes</span>, <span class="var">failures</span> = <span class="nm">7</span>, <span class="nm">3</span>
+
+<span class="var">log_likelihood</span> = <span class="var">successes</span><span class="op">*</span><span class="lib">np</span>.<span class="fn">log</span>(<span class="var">theta</span>) <span class="op">+</span> <span class="var">failures</span><span class="op">*</span><span class="lib">np</span>.<span class="fn">log</span>(<span class="nm">1</span><span class="op">-</span><span class="var">theta</span>)
+<span class="cm"># = log(θ⁷ · (1-θ)³) — Bernoulli log-likelihood</span>
+
+<span class="var">log_prior</span> = (<span class="nm">2</span><span class="op">-</span><span class="nm">1</span>)<span class="op">*</span><span class="lib">np</span>.<span class="fn">log</span>(<span class="var">theta</span>) <span class="op">+</span> (<span class="nm">2</span><span class="op">-</span><span class="nm">1</span>)<span class="op">*</span><span class="lib">np</span>.<span class="fn">log</span>(<span class="nm">1</span><span class="op">-</span><span class="var">theta</span>)
+<span class="cm"># = log(Beta(2,2)) kernel — peaks at θ=0.5</span>
+
+<span class="var">log_posterior</span> = <span class="var">log_likelihood</span> <span class="op">+</span> <span class="var">log_prior</span>
+<span class="cm"># addition in log space = multiplication in original space</span>
+
+<span class="var">theta_mle</span> = <span class="var">theta</span>[<span class="lib">np</span>.<span class="fn">argmax</span>(<span class="var">log_likelihood</span>)]   <span class="cm"># peak of likelihood ≈ 0.70</span>
+<span class="var">theta_map</span> = <span class="var">theta</span>[<span class="lib">np</span>.<span class="fn">argmax</span>(<span class="var">log_posterior</span>)]    <span class="cm"># peak of posterior ≈ 0.67</span>
+
+<span class="lib">plt</span>.<span class="fn">axvline</span>(<span class="var">theta_mle</span>, <span class="var">linestyle</span>=<span class="st">'--'</span>, <span class="var">label</span>=<span class="fn">f</span><span class="st">"MLE ≈ {theta_mle:.2f}"</span>)
+<span class="lib">plt</span>.<span class="fn">axvline</span>(<span class="var">theta_map</span>, <span class="var">linestyle</span>=<span class="st">'--'</span>, <span class="var">label</span>=<span class="fn">f</span><span class="st">"MAP ≈ {theta_map:.2f}"</span>)</pre>
+      </div>
+      <div class="annotations-wrap">
+        <div class="annotation"><span class="arrow">→</span><b style="color:#cdd6f4;margin-right:6px">s*log(θ) + f*log(1-θ)</b>log of Bernoulli likelihood. Log turns multiplication into addition — numerically stable and easier to optimize.</div>
+        <div class="annotation"><span class="arrow">→</span><b style="color:#cdd6f4;margin-right:6px">(a-1)*log(θ) + (b-1)*log(1-θ)</b>log of Beta kernel. With a=b=2, this adds log(θ) + log(1-θ) — a penalty that's 0 at θ=0.5 and -∞ at the extremes.</div>
+        <div class="annotation"><span class="arrow">→</span><b style="color:#cdd6f4;margin-right:6px">log_posterior = log_L + log_prior</b>this is Bayes' theorem in log space. Adding logs = multiplying probabilities. No normalization needed for argmax.</div>
+        <div class="annotation"><span class="arrow">→</span><b style="color:#cdd6f4;margin-right:6px">np.argmax(arr)</b>returns the INDEX of the maximum value. Then theta[index] gives the θ value at that peak.</div>
+        <div class="annotation"><span class="arrow">→</span><b style="color:#cdd6f4;margin-right:6px">plt.axvline(x)</b>draws a vertical line at a specific x-value. Used to mark MLE and MAP on the plot.</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════════
+     SECTION 4: NON-CONJUGATE PRIOR
+════════════════════════════════════════════════ -->
+<div class="section visible" id="s4">
+  <div class="section-header">
+    <div class="section-num" style="background:rgba(255,217,61,0.15);color:var(--accent4)">04</div>
+    <div>
+      <div class="section-title">Numerical Posterior — Non-Conjugate Prior</div>
+      <div class="section-desc">bayes still works, just compute it</div>
+    </div>
+  </div>
+  <div class="cards">
+    <div class="card card-full">
+      <div class="card-head">
+        <div class="card-title">Likelihood function + strange prior + full normalization</div>
+        <span class="card-tag tag-pattern">general pattern</span>
+      </div>
+      <div class="card-summary">📌 When prior isn't conjugate, define it manually, multiply by likelihood, normalize with trapezoid. Same 3-step recipe as always.</div>
+      <div class="code-block">
+        <button class="copy-btn" onclick="copyCode(this)">copy</button>
+        <pre><span class="var">theta</span> = <span class="lib">np</span>.<span class="fn">linspace</span>(<span class="nm">0</span>, <span class="nm">1</span>, <span class="nm">2000</span>)          <span class="cm"># finer grid for accuracy</span>
+
+<span class="kw">def</span> <span class="fn">likelihood</span>(<span class="var">theta</span>, <span class="var">data</span>):
+    <span class="var">s</span> = <span class="fn">sum</span>(<span class="var">data</span>)
+    <span class="var">f</span> = <span class="fn">len</span>(<span class="var">data</span>) <span class="op">-</span> <span class="var">s</span>
+    <span class="kw">return</span> <span class="var">theta</span><span class="op">**</span><span class="var">s</span> <span class="op">*</span> (<span class="nm">1</span><span class="op">-</span><span class="var">theta</span>)<span class="op">**</span><span class="var">f</span>           <span class="cm"># Bernoulli likelihood</span>
+
+<span class="var">data</span> = [<span class="nm">1</span>,<span class="nm">1</span>,<span class="nm">1</span>,<span class="nm">0</span>,<span class="nm">1</span>,<span class="nm">0</span>,<span class="nm">1</span>,<span class="nm">1</span>,<span class="nm">1</span>,<span class="nm">1</span>]
+
+<span class="var">prior</span> = <span class="lib">np</span>.<span class="fn">sqrt</span>(<span class="var">theta</span><span class="op">*</span>(<span class="nm">1</span><span class="op">-</span><span class="var">theta</span>))             <span class="cm"># √(θ(1-θ)) — not a named family!</span>
+<span class="var">prior</span>[<span class="lib">np</span>.<span class="fn">isnan</span>(<span class="var">prior</span>)] = <span class="nm">0</span>                   <span class="cm"># fix NaN at θ=0 and θ=1</span>
+
+<span class="var">unnormalized</span> = <span class="fn">likelihood</span>(<span class="var">theta</span>, <span class="var">data</span>) <span class="op">*</span> <span class="var">prior</span>  <span class="cm"># P(data|θ) · P(θ)</span>
+<span class="var">posterior</span> = <span class="var">unnormalized</span> <span class="op">/</span> <span class="lib">np</span>.<span class="fn">trapezoid</span>(<span class="var">unnormalized</span>, <span class="var">theta</span>)
+
+<span class="lib">plt</span>.<span class="fn">plot</span>(<span class="var">theta</span>, <span class="var">prior</span><span class="op">/</span><span class="var">prior</span>.<span class="fn">max</span>(), <span class="var">label</span>=<span class="st">"Prior (scaled)"</span>)
+<span class="lib">plt</span>.<span class="fn">plot</span>(<span class="var">theta</span>, <span class="var">posterior</span>, <span class="var">label</span>=<span class="st">"Posterior (numerical)"</span>)</pre>
+      </div>
+      <div class="annotations-wrap">
+        <div class="annotation"><span class="arrow">→</span><b style="color:#cdd6f4;margin-right:6px">linspace(0,1,2000)</b>2000 points instead of 500 — finer grid = more accurate numerical integration.</div>
+        <div class="annotation"><span class="arrow">→</span><b style="color:#cdd6f4;margin-right:6px">def likelihood(theta, data)</b>wraps the likelihood as a reusable function. Counts successes/failures from data automatically.</div>
+        <div class="annotation"><span class="arrow">→</span><b style="color:#cdd6f4;margin-right:6px">np.sqrt(theta*(1-theta))</b>a custom, non-standard prior shape. Not Beta, not Gaussian — just a function we chose. Algebra won't give a clean posterior.</div>
+        <div class="annotation"><span class="arrow">→</span><b style="color:#cdd6f4;margin-right:6px">prior[np.isnan(prior)] = 0</b>at θ=0 or θ=1, sqrt(0·1)=0 but floating point can produce NaN. This masks those safely to 0.</div>
+        <div class="annotation"><span class="arrow">→</span><b style="color:#cdd6f4;margin-right:6px">same 3 lines</b>unnormalized = L × P, then divide by trapezoid. This recipe works for ANY prior — conjugate or not.</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════════
+     SECTION 5: QUICK REFERENCE
+════════════════════════════════════════════════ -->
+<div class="section visible" id="s5">
+  <div class="section-header">
+    <div class="section-num" style="background:rgba(91,143,255,0.15);color:var(--accent)">05</div>
+    <div>
+      <div class="section-title">Quick Reference — Functions Used</div>
+      <div class="section-desc">every function from the notebook, one line each</div>
+    </div>
+  </div>
+  <div class="cards">
+    <div class="card" style="grid-column:1/-1">
+      <div class="card-head">
+        <div class="card-title">NumPy</div>
+        <span class="card-tag tag-numpy">numpy</span>
+      </div>
+      <table class="ref-table">
+        <tr><th>Function</th><th>What it does</th><th>Example from notebook</th></tr>
+        <tr><td class="fn-name">np.linspace(a, b, n)</td><td class="fn-desc">n evenly spaced values from a to b</td><td class="fn-ex">np.linspace(0, 1, 500)</td></tr>
+        <tr><td class="fn-name">np.ones_like(arr)</td><td class="fn-desc">array of 1s, same shape as arr</td><td class="fn-ex">prior = np.ones_like(theta)</td></tr>
+        <tr><td class="fn-name">np.trapezoid(y, x)</td><td class="fn-desc">numerical integral ∫y dx using trapezoid rule</td><td class="fn-ex">Z = np.trapezoid(unnorm, theta)</td></tr>
+        <tr><td class="fn-name">np.log(arr)</td><td class="fn-desc">element-wise natural log</td><td class="fn-ex">log_lik = s*np.log(theta)</td></tr>
+        <tr><td class="fn-name">np.argmax(arr)</td><td class="fn-desc">index of maximum value</td><td class="fn-ex">theta[np.argmax(log_posterior)]</td></tr>
+        <tr><td class="fn-name">np.sqrt(arr)</td><td class="fn-desc">element-wise square root</td><td class="fn-ex">prior = np.sqrt(theta*(1-theta))</td></tr>
+        <tr><td class="fn-name">np.isnan(arr)</td><td class="fn-desc">boolean mask where values are NaN</td><td class="fn-ex">prior[np.isnan(prior)] = 0</td></tr>
+      </table>
+    </div>
+    <div class="card" style="grid-column:1/-1">
+      <div class="card-head">
+        <div class="card-title">Matplotlib</div>
+        <span class="card-tag tag-matplotlib">matplotlib</span>
+      </div>
+      <table class="ref-table">
+        <tr><th>Function</th><th>What it does</th><th>Example from notebook</th></tr>
+        <tr><td class="fn-name">plt.plot(x, y, label=)</td><td class="fn-desc">line plot with optional legend label</td><td class="fn-ex">plt.plot(theta, posterior, label="Posterior")</td></tr>
+        <tr><td class="fn-name">plt.axvline(x, linestyle=)</td><td class="fn-desc">vertical line at x-value</td><td class="fn-ex">plt.axvline(theta_map, linestyle='--')</td></tr>
+        <tr><td class="fn-name">plt.legend()</td><td class="fn-desc">show legend from all labeled plots</td><td class="fn-ex">plt.legend()</td></tr>
+        <tr><td class="fn-name">plt.title(str)</td><td class="fn-desc">set chart title</td><td class="fn-ex">plt.title("MAP = Likelihood + Regularization")</td></tr>
+        <tr><td class="fn-name">plt.xlabel / ylabel</td><td class="fn-desc">axis labels (supports LaTeX with r"...")</td><td class="fn-ex">plt.xlabel(r"$\theta$")</td></tr>
+        <tr><td class="fn-name">plt.figure(figsize=)</td><td class="fn-desc">create figure with custom size in inches</td><td class="fn-ex">plt.figure(figsize=(6,4))</td></tr>
+        <tr><td class="fn-name">plt.show()</td><td class="fn-desc">render and display the figure</td><td class="fn-ex">plt.show()</td></tr>
+      </table>
+    </div>
+    <div class="card" style="grid-column:1/-1">
+      <div class="card-head">
+        <div class="card-title">The Universal Bayesian Recipe</div>
+        <span class="card-tag tag-algo">algorithm</span>
+      </div>
+      <div class="card-summary">📌 Every posterior computation in this notebook follows the same 3-line pattern.</div>
+      <div class="code-block">
+        <pre><span class="cm"># Step 1: define your prior over the grid</span>
+<span class="var">prior</span> = <span class="cm">...any function of theta...</span>
+
+<span class="cm"># Step 2: multiply likelihood × prior (unnormalized posterior)</span>
+<span class="var">unnormalized</span> = <span class="fn">likelihood</span>(<span class="var">theta</span>, <span class="var">data</span>) <span class="op">*</span> <span class="var">prior</span>
+
+<span class="cm"># Step 3: normalize by area → valid probability distribution</span>
+<span class="var">posterior</span> = <span class="var">unnormalized</span> <span class="op">/</span> <span class="lib">np</span>.<span class="fn">trapezoid</span>(<span class="var">unnormalized</span>, <span class="var">theta</span>)</pre>
+      </div>
+    </div>
+  </div>
+</div>
+
+</div><!-- end container -->
+
+<button class="back-top" onclick="window.scrollTo({top:0,behavior:'smooth'})">↑</button>
+
+<script>
+function show(id, btn) {
+  document.querySelectorAll('.nav-pill').forEach(p => p.classList.remove('active'));
+  btn.classList.add('active');
+
+  if (id === 'all') {
+    document.querySelectorAll('.section').forEach(s => s.classList.add('visible'));
+  } else {
+    document.querySelectorAll('.section').forEach(s => s.classList.remove('visible'));
+    document.getElementById(id).classList.add('visible');
+    document.getElementById(id).scrollIntoView({behavior:'smooth', block:'start'});
+  }
+}
+
+function copyCode(btn) {
+  const pre = btn.closest('.code-block').querySelector('pre');
+  const text = pre.innerText;
+  navigator.clipboard.writeText(text).then(() => {
+    btn.textContent = 'copied!';
+    setTimeout(() => btn.textContent = 'copy', 1500);
+  });
+}
+</script>
+</body>
+</html>
